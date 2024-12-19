@@ -29,7 +29,7 @@ func ReadInput(scope beam.Scope, fileName string) beam.PCollection {
 	return beam.ParDo(scope, healtcaredp.CreateAdmissionFn, lines)
 }
 
-func WriteOutput(scope beam.Scope, col beam.PCollection, fileName string, headers ...string) {
+func WriteOutput(scope beam.Scope, col beam.PCollection, fileName string) {
 	scope = scope.Scope("writeOutput")
 	if typex.IsKV(col.Type()) {
 		textio.Write(scope, fileName, beam.ParDo(scope, formatKVCsvFn, col))
