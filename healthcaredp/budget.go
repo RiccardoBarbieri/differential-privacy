@@ -13,10 +13,11 @@ type DpBudgetShare struct {
 	PartitionDelta     float64
 }
 
-type budgetSplit struct {
-	aggregationEpsilon float64
-	partitionEpsilon   float64
-	delta              float64
+type DpBudget struct {
+	PrivacySpec  *pbeam.PrivacySpec
+	BudgetShares map[string]DpBudgetShare
+	Delta        float64
+	Epsilon      float64
 }
 
 const delta = 1e-5
@@ -25,10 +26,9 @@ var epsilon = math.Log(3)
 var aggregationEpsilon = epsilon / 2
 var partitionEpsilon = epsilon - aggregationEpsilon
 
-var GlobalPrivacySpec *pbeam.PrivacySpec
-
 var supportedOperations = []string{"CountConditionsDp", "CountTestResultsDp"}
-var budgetSplits = map[string]budgetSplit{}
+
+var Budget DpBudget
 
 func init() {
 	pSpecParams := pbeam.PrivacySpecParams{
@@ -37,14 +37,16 @@ func init() {
 		PartitionSelectionDelta:   delta,
 	}
 	var err error
-	GlobalPrivacySpec, err = pbeam.NewPrivacySpec(pSpecParams)
+	Budget.Delta = delta
+	Budget.Epsilon = epsilon
+	Budget.PrivacySpec, err = pbeam.NewPrivacySpec(pSpecParams)
+	Budget.BudgetShares = make(map[string]DpBudgetShare)
 	if err != nil {
 		log.Fatalf("Failed to create privacy spec: %v", err)
 	}
-
 }
 
-func InitBudgetSplits(importance ...float64) {
+func (db DpBudget) InitAllBudgetShares(importance ...float64) {
 	if len(importance) != len(supportedOperations) {
 		log.Fatalf("Expected %d importance values, got %d", len(supportedOperations), len(importance))
 	}
@@ -53,34 +55,15 @@ func InitBudgetSplits(importance ...float64) {
 		totalImportance += imp
 	}
 	for i, imp := range importance {
-		budgetSplits[supportedOperations[i]] = budgetSplit{
-			aggregationEpsilon: (imp / totalImportance) * aggregationEpsilon,
-			partitionEpsilon:   (imp / totalImportance) * partitionEpsilon,
-			delta:              (imp / totalImportance) * delta,
+		db.BudgetShares[supportedOperations[i]] = DpBudgetShare{
+			AggregationEpsilon: (imp / totalImportance) * aggregationEpsilon,
+			PartitionEpsilon:   (imp / totalImportance) * partitionEpsilon,
+			AggregationDelta:   (imp / totalImportance) * delta,
+			PartitionDelta:     delta - (imp/totalImportance)*delta,
 		}
 	}
 }
 
-func GetBudgetShare(operation string) DpBudgetShare {
-	switch operation {
-	case "CountConditionsDp":
-		return DpBudgetShare{
-			AggregationEpsilon: budgetSplits["CountConditionsDp"].aggregationEpsilon,
-			PartitionEpsilon:   budgetSplits["CountConditionsDp"].partitionEpsilon,
-
-			AggregationDelta: budgetSplits["CountConditionsDp"].delta,
-			PartitionDelta:   delta - budgetSplits["CountConditionsDp"].delta,
-		}
-	case "CountTestResultsDp":
-		return DpBudgetShare{
-			AggregationEpsilon: budgetSplits["CountTestResultsDp"].aggregationEpsilon,
-			PartitionEpsilon:   budgetSplits["CountTestResultsDp"].partitionEpsilon,
-
-			AggregationDelta: budgetSplits["CountTestResultsDp"].delta,
-			PartitionDelta:   delta - budgetSplits["CountTestResultsDp"].delta,
-		}
-	default:
-		log.Fatalf("Unsupported operation: %s", operation)
-		return DpBudgetShare{}
-	}
+func (db DpBudget) GetBudgetShare(operation string) DpBudgetShare {
+	return db.BudgetShares[operation]
 }
