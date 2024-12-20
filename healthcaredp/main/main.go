@@ -17,7 +17,7 @@ func main() {
 	cmd := &cli.Command{
 		Version:               "0.1.0",
 		EnableShellCompletion: true,
-		Name:                  "healthcare-pipelinedp",
+		Name:                  "healthcaredp",
 		Usage:                 "A pipeline to anonymize healthcare data with differential privacy",
 		Commands: []*cli.Command{
 			{
@@ -27,25 +27,25 @@ func main() {
 				Action:  runAll,
 				Flags: []cli.Flag{
 					&cli.StringFlag{
-						Name:     "input_csv",
+						Name:     "input-csv",
 						Value:    "",
 						Required: true,
 						Usage:    "Name of the csv `file` that contains the healthcare data",
 					},
 					&cli.StringFlag{
-						Name:     "output_csv",
+						Name:     "output-csv",
 						Value:    "",
 						Required: true,
 						Usage:    "Base name of the output csv `file` that will contain output data (ex. output.csv)",
 					},
 					&cli.StringFlag{
-						Name:     "output_clean",
+						Name:     "output-clean",
 						Value:    "",
 						Required: true,
 						Usage:    "Name of the output csv `file` that will contain the cleaned dataset",
 					},
 					&cli.BoolFlag{
-						Name:  "generate_non_dp",
+						Name:  "generate-non-dp",
 						Value: false,
 						Usage: "Generate non dp results along with conditions and test results (dev only)",
 					},
@@ -55,16 +55,16 @@ func main() {
 	}
 
 	if err := cmd.Run(context.Background(), os.Args); err != nil {
-
+		log.Fatalf("Error running command: %v", err)
 	}
 
 }
 
 func runAll(ctx context.Context, cmd *cli.Command) error {
-	inputCsv := cmd.String("input_csv")
-	outputCsv := cmd.String("output_csv")
-	outputClean := cmd.String("output_clean")
-	generateClear := cmd.Bool("generate_non_dp")
+	inputCsv := cmd.String("input-csv")
+	outputCsv := cmd.String("output-csv")
+	outputClean := cmd.String("output-clean")
+	generateClear := cmd.Bool("generate-non-dp")
 	beam.Init()
 	runSum(inputCsv, outputCsv, outputClean, generateClear)
 	return nil
