@@ -6,6 +6,7 @@ require (
 	github.com/apache/beam/sdks/v2 v2.61.0
 	github.com/golang/glog v1.2.2
 	github.com/google/differential-privacy/privacy-on-beam/v3 v3.0.0
+	github.com/urfave/cli/v3 v3.0.0-beta1
 	golang.org/x/text v0.21.0
 )
 
