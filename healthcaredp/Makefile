@@ -10,6 +10,15 @@ SHELL := /bin/bash
 BINARY_NAME = healthcaredp
 BUILD_DIR = main/build
 
+ifdef INSTALL_DIR
+INSTALL_DIR = $(INSTALL_DIR)
+else
+INSTALL_DIR = .local/bin
+endif
+
+COMPLETION_DIR = .local/share/bash-completion/completions
+COMPLETION_SCRIPT = healthcaredp
+
 all: check-env build
 
 
@@ -34,6 +43,7 @@ check-env:
 
 build: check-env
 	@echo "Downloading packages"
+	@go mod download
 	@go mod tidy
 	@echo "Building $(BINARY_NAME)..."
 	@mkdir -p $(BUILD_DIR)
@@ -46,6 +56,16 @@ run: build
 clean:
 	@echo "Cleaning up..."
 	@rm -rf $(BUILD_DIR)
+	@rm $(HOME)/.local/bin/$(BINARY_NAME)
+
+
+install: build
+	@echo "Copying executable to $(HOME)/$(INSTALL_DIR) ..."
+	@cp $(BUILD_DIR)/$(BINARY_NAME) $(HOME)/$(INSTALL_DIR)
+	@echo "Setting up bash completion..."
+	@$(BUILD_DIR)/$(BINARY_NAME) completion bash > bash_autocomplete
+	@mkdir -p $(HOME)/$(COMPLETION_DIR)
+	@mv bash_autocomplete $(HOME)/$(COMPLETION_DIR)/$(COMPLETION_SCRIPT)
 
 help:
 	@echo "Makefile for healthcaredp pipeline tool"
@@ -56,6 +76,7 @@ help:
 	@echo "Targets:"
 	@echo "  all        Check environment and build the program (default)"
 	@echo "  check-env  Check if the Go environment is setup correctly"
+	@echo "	 install	Install executable into local"
 	@echo "  build      Build the program"
 	@echo "  run        Build and run the program"
 	@echo "  clean      Remove build artifacts"
