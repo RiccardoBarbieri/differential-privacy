@@ -21,8 +21,6 @@ COMPLETION_SCRIPT = healthcaredp
 
 all: check-env build
 
-
-
 check-env:
 	@echo "Checking Go environment..."
 	@if [ -z "$(GOROOT)" ]; then \
