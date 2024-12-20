@@ -2,41 +2,81 @@ package main
 
 import (
 	"context"
-	"flag"
 	"github.com/apache/beam/sdks/v2/go/pkg/beam"
 	"github.com/apache/beam/sdks/v2/go/pkg/beam/runners/direct"
 	log "github.com/golang/glog"
+	"github.com/urfave/cli/v3"
 	"healthcaredp"
 	"healthcaredp/aggregations"
 	"healthcaredp/utils"
+	"os"
 	"strings"
 )
 
-var (
-	generateClear = flag.Bool("generate_clear", false, "Generate clear  along with conditions and test results")
-	inputCsv      = flag.String("input_csv", "", "Name of the csv file that contains the healthcare data")
-	outputCsv     = flag.String("output_csv", "", "Base name of the output csv file that will contain output data (ex. output.csv)")
-	outputClean   = flag.String("output_clean", "", "Name of the output csv file that will contain the cleaned dataset")
-)
-
 func main() {
-	flag.Parse()
-	if *inputCsv == "" {
-		log.Exit("Input csv file is required.")
+	cmd := &cli.Command{
+		Version:               "0.1.0",
+		EnableShellCompletion: true,
+		Name:                  "healthcare-pipelinedp",
+		Usage:                 "A pipeline to anonymize healthcare data with differential privacy",
+		Commands: []*cli.Command{
+			{
+				Name:    "all",
+				Aliases: []string{"a"},
+				Usage:   "Run all the operations in the pipeline",
+				Action:  runAll,
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:     "input_csv",
+						Value:    "",
+						Required: true,
+						Usage:    "Name of the csv `file` that contains the healthcare data",
+					},
+					&cli.StringFlag{
+						Name:     "output_csv",
+						Value:    "",
+						Required: true,
+						Usage:    "Base name of the output csv `file` that will contain output data (ex. output.csv)",
+					},
+					&cli.StringFlag{
+						Name:     "output_clean",
+						Value:    "",
+						Required: true,
+						Usage:    "Name of the output csv `file` that will contain the cleaned dataset",
+					},
+					&cli.BoolFlag{
+						Name:  "generate_non_dp",
+						Value: false,
+						Usage: "Generate non dp results along with conditions and test results (dev only)",
+					},
+				},
+			},
+		},
 	}
-	if *outputCsv == "" {
-		log.Exit("Output csv file is required.")
+
+	if err := cmd.Run(context.Background(), os.Args); err != nil {
+
 	}
-	if *outputClean == "" {
-		log.Exit("Output clean csv file is required.")
-	}
-	baseOutputName := strings.TrimSuffix(*outputCsv, ".csv")
+
+}
+
+func runAll(ctx context.Context, cmd *cli.Command) error {
+	inputCsv := cmd.String("input_csv")
+	outputCsv := cmd.String("output_csv")
+	outputClean := cmd.String("output_clean")
+	generateClear := cmd.Bool("generate_non_dp")
+	beam.Init()
+	runSum(inputCsv, outputCsv, outputClean, generateClear)
+	return nil
+}
+
+func runSum(inputCsv string, outputCsv string, outputClean string, generateClear bool) {
+
+	baseOutputName := strings.TrimSuffix(outputCsv, ".csv")
 	ccOutputCsv := baseOutputName + "_conditions_count.csv"
 	ccOutputCsvDp := baseOutputName + "_conditions_count_dp.csv"
 	ctrOutputCsv := baseOutputName + "_testresults_count.csv"
 	ctrOutputCsvDp := baseOutputName + "_testresults_count_dp.csv"
-
-	beam.Init()
 
 	pipeline := beam.NewPipeline()
 	scope := pipeline.Root()
@@ -44,11 +84,11 @@ func main() {
 	healtcaredp.InitBudgetSplits(1, 2)
 	globalPrivacySpec := healtcaredp.GlobalPrivacySpec
 
-	admissions := utils.ReadInput(scope, *inputCsv)
+	admissions := utils.ReadInput(scope, inputCsv)
 	admissionsCleaned := healtcaredp.CleanDataset(scope, admissions)
-	utils.WriteOutput(scope, admissionsCleaned, *outputClean)
+	utils.WriteOutput(scope, admissionsCleaned, outputClean)
 
-	if *generateClear {
+	if generateClear {
 		conditionsCount := aggregations.CountConditions(scope, admissionsCleaned)
 		testResultsCount := aggregations.CountTestResults(scope, admissionsCleaned)
 		utils.WriteOutput(scope, conditionsCount, ccOutputCsv)
@@ -66,12 +106,11 @@ func main() {
 		log.Exitf("Execution of pipeline failed: %v", err)
 	}
 
-	utils.WriteHeaders(*outputClean, utils.StructCsvHeaders(healtcaredp.Admission{})...)
-	if *generateClear {
+	utils.WriteHeaders(outputClean, utils.StructCsvHeaders(healtcaredp.Admission{})...)
+	if generateClear {
 		utils.WriteHeaders(ccOutputCsv, "Medical Condition", "Count")
 		utils.WriteHeaders(ctrOutputCsv, "Test Results", "Count")
 	}
 	utils.WriteHeaders(ccOutputCsvDp, "Medical Condition", "Count(DP)")
 	utils.WriteHeaders(ctrOutputCsvDp, "Test Results", "Count(DP)")
-
 }
