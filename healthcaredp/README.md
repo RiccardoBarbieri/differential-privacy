@@ -12,23 +12,15 @@
     git clone https://github.com/RiccardoBarbieri/differential-privacy
     cd differential-privacy/healthcaredp
     ```
-2. Install dependencies:
+2. Build the program executable:
     ```bash
-    go mod download
+   make build
     ```
-3. Navigate to the main directory:
-    ```bash
-    cd main
-    ```
-4. Build the program executable:
-    ```bash 
-    go build -o build/healthcaredp .
-    ```
-5. Run
+3. Run
    ```bash
-   ./build/healthcaredp -h
+   make run
    ```
-   to show documentation for the parameters.
+   to execute the pipeline
 
 [//]: # (### Troubleshooting)
 
