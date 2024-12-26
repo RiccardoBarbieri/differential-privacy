@@ -1,16 +1,22 @@
-package cmd
+package cmds
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/spf13/cobra"
+)
 
 var RootCmd = &cobra.Command{
 	Version: "0.1.0",
 	Use:     "healthcaredp",
-	Short:   "A pipeline to anonymize healthcare data with differential privacy with privacy-on-beam",
+	Short:   "A pipeline to anonymize healthcare data using differential privacy techniques with privacy-on-beam",
+	Args:    cobra.NoArgs,
+	Example: "healthcaredp all --input-csv input.csv --output-csv output.csv --output-clean output_clean.csv",
 }
 
 func init() {
 
 	RootCmd.AddCommand(AllCmd)
+	RootCmd.AddCommand(CountCmd)
+	RootCmd.AddCommand(AvgCmd)
 
 	RootCmd.PersistentFlags().String("input-csv", "", "Name of the csv file that contains the healthcare data")
 	RootCmd.PersistentFlags().String("output-csv", "", "Base name of the output csv file that will contain output data (ex. output.csv)")

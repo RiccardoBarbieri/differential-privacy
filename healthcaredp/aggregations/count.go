@@ -6,18 +6,19 @@ import (
 	"github.com/apache/beam/sdks/v2/go/pkg/beam/transforms/stats"
 	"github.com/google/differential-privacy/privacy-on-beam/v3/pbeam"
 	"healthcaredp"
+	"healthcaredp/model"
 )
 
 func init() {
-	register.Function1x1[healtcaredp.Admission, string](extractMedicalCondition)
-	register.Function1x1[healtcaredp.Admission, string](extractTestResult)
+	register.Function1x1[model.Admission, string](extractMedicalCondition)
+	register.Function1x1[model.Admission, string](extractTestResult)
 }
 
-func extractMedicalCondition(admission healtcaredp.Admission) string {
+func extractMedicalCondition(admission model.Admission) string {
 	return admission.MedicalCondition
 }
 
-func extractTestResult(admission healtcaredp.Admission) string {
+func extractTestResult(admission model.Admission) string {
 	return admission.TestResults
 }
 
@@ -28,17 +29,18 @@ func CountConditions(scope beam.Scope, col beam.PCollection) beam.PCollection {
 	return conditionsCount
 }
 
-func CountConditionsDp(scope beam.Scope, col beam.PCollection, pSpec *pbeam.PrivacySpec, budgetShare healtcaredp.DpBudgetShare) beam.PCollection {
-	scope = scope.Scope("PrivateCountConditions")
-	pCol := pbeam.MakePrivateFromStruct(scope, col, pSpec, "Name")
+func CountConditionsDp(scope beam.Scope, col beam.PCollection, budget healthcaredp.DpBudget) beam.PCollection {
+	operation := "CountConditionsDp"
+	scope = scope.Scope(operation)
+	pCol := pbeam.MakePrivateFromStruct(scope, col, budget.PrivacySpec, "Name")
 
 	pConditions := pbeam.ParDo(scope, extractMedicalCondition, pCol)
 	pConditionsCount := pbeam.Count(scope, pConditions, pbeam.CountParams{
 		PartitionSelectionParams: pbeam.PartitionSelectionParams{
-			Epsilon: budgetShare.PartitionEpsilon,
-			Delta:   budgetShare.PartitionDelta,
+			Epsilon: budget.GetBudgetShare(operation).PartitionEpsilon,
+			Delta:   budget.GetBudgetShare(operation).PartitionDelta,
 		},
-		AggregationEpsilon:       budgetShare.AggregationEpsilon,
+		AggregationEpsilon:       budget.GetBudgetShare(operation).AggregationEpsilon,
 		MaxPartitionsContributed: 6,
 		MaxValue:                 24,
 	})
@@ -52,18 +54,19 @@ func CountTestResults(scope beam.Scope, col beam.PCollection) beam.PCollection {
 	return conditionsCount
 }
 
-func CountTestResultsDp(scope beam.Scope, col beam.PCollection, pSpec *pbeam.PrivacySpec, budgetShare healtcaredp.DpBudgetShare) beam.PCollection {
-	scope = scope.Scope("CountTestResultsDp")
-	pCol := pbeam.MakePrivateFromStruct(scope, col, pSpec, "Name")
+func CountTestResultsDp(scope beam.Scope, col beam.PCollection, budget healthcaredp.DpBudget) beam.PCollection {
+	operation := "CountTestResultsDp"
+	scope = scope.Scope(operation)
+	pCol := pbeam.MakePrivateFromStruct(scope, col, budget.PrivacySpec, "Name")
 
 	pTestResults := pbeam.ParDo(scope, extractTestResult, pCol)
 	pTestResultsCount := pbeam.Count(scope, pTestResults, pbeam.CountParams{
 		PartitionSelectionParams: pbeam.PartitionSelectionParams{
-			Epsilon: budgetShare.PartitionEpsilon,
-			Delta:   budgetShare.PartitionDelta,
+			Epsilon: budget.GetBudgetShare(operation).PartitionEpsilon,
+			Delta:   budget.GetBudgetShare(operation).PartitionDelta,
 		},
-		AggregationEpsilon:       budgetShare.AggregationEpsilon,
-		MaxPartitionsContributed: 8,
+		AggregationEpsilon:       budget.GetBudgetShare(operation).AggregationEpsilon,
+		MaxPartitionsContributed: 3,
 		MaxValue:                 24,
 	})
 	return pTestResultsCount

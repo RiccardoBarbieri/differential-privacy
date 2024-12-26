@@ -1,4 +1,4 @@
-package healtcaredp
+package model
 
 import (
 	"encoding/csv"

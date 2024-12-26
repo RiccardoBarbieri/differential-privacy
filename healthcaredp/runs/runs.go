@@ -3,79 +3,131 @@ package runs
 import (
 	"context"
 	"fmt"
-	"github.com/apache/beam/sdks/v2/go/pkg/beam"
 	"github.com/apache/beam/sdks/v2/go/pkg/beam/runners/direct"
-	log "github.com/golang/glog"
 	"github.com/spf13/cobra"
-	healtcaredp "healthcaredp"
-	"healthcaredp/aggregations"
+	"healthcaredp"
+	"healthcaredp/model"
 	"healthcaredp/utils"
-	"strings"
 )
 
-func RunAll(cmd *cobra.Command, args []string) error {
-	inputCsv, _ := cmd.Parent().PersistentFlags().GetString("input-csv")
-	outputCsv, _ := cmd.Parent().PersistentFlags().GetString("output-csv")
-	outputClean, _ := cmd.Parent().PersistentFlags().GetString("output-clean")
-	generateClear, _ := cmd.Parent().PersistentFlags().GetBool("generate-non-dp")
+func RunAll(cmd *cobra.Command, args []string) (err error) {
 
-	if inputCsv == "" {
-		return fmt.Errorf("input-csv flag is required")
-	}
-	if outputCsv == "" {
-		return fmt.Errorf("output-csv flag is required")
-	}
-	if outputClean == "" {
-		return fmt.Errorf("output-clean flag is required")
+	err = healthcaredp.Budget.InitAllBudgetShares(
+		map[string]float64{
+			"CountConditions":  1.0,
+			"CountTestResults": 1.0,
+			"AvgStayByWeek":    1.0,
+		},
+	)
+	if err != nil {
+		return err
 	}
 
-	healtcaredp.Budget.InitAllBudgetShares(1, 2)
+	RunConditionsCount(healthcaredp.GlobalScope,
+		healthcaredp.CurrentIOArgs.OutputCsv,
+		healthcaredp.CurrentIOArgs.GenerateNonDp,
+		healthcaredp.AdmissionsCleaned)
+	RunTestResultsCount(healthcaredp.GlobalScope,
+		healthcaredp.CurrentIOArgs.OutputCsv,
+		healthcaredp.CurrentIOArgs.GenerateNonDp,
+		healthcaredp.AdmissionsCleaned)
 
-	beam.Init()
-	RunSum(inputCsv, outputCsv, outputClean, generateClear)
+	// Execute pipeline.
+	_, err = direct.Execute(context.Background(), healthcaredp.GlobalPipeline)
+	if err != nil {
+		return fmt.Errorf("error executing pipeline: %v", err)
+	}
+
+	headers, err := utils.StructCsvHeaders(model.Admission{})
+	if err != nil {
+		return fmt.Errorf("error getting headers: %v", err)
+	}
+	utils.WriteHeaders(healthcaredp.CurrentIOArgs.OutputClean, headers...)
+	ConditionsCountWriteHeaders(healthcaredp.CurrentIOArgs.GenerateNonDp)
+	TestResultsCountWriteHeaders(healthcaredp.CurrentIOArgs.GenerateNonDp)
+
 	return nil
 }
 
-func RunSum(inputCsv string, outputCsv string, outputClean string, generateClear bool) {
-
-	baseOutputName := strings.TrimSuffix(outputCsv, ".csv")
-	ccOutputCsv := baseOutputName + "_conditions_count.csv"
-	ccOutputCsvDp := baseOutputName + "_conditions_count_dp.csv"
-	ctrOutputCsv := baseOutputName + "_testresults_count.csv"
-	ctrOutputCsvDp := baseOutputName + "_testresults_count_dp.csv"
-
-	pipeline := beam.NewPipeline()
-	scope := pipeline.Root()
-
-	globalPrivacySpec := healtcaredp.Budget.PrivacySpec
-
-	admissions := utils.ReadInput(scope, inputCsv)
-	admissionsCleaned := healtcaredp.CleanDataset(scope, admissions)
-	utils.WriteOutput(scope, admissionsCleaned, outputClean)
-
-	if generateClear {
-		conditionsCount := aggregations.CountConditions(scope, admissionsCleaned)
-		testResultsCount := aggregations.CountTestResults(scope, admissionsCleaned)
-		utils.WriteOutput(scope, conditionsCount, ccOutputCsv)
-		utils.WriteOutput(scope, testResultsCount, ctrOutputCsv)
+func RunCounts(cmd *cobra.Command, args []string) (err error) {
+	err = healthcaredp.Budget.InitBudgetShares(
+		map[string]float64{
+			"CountConditions":  1.0,
+			"CountTestResults": 1.0,
+		},
+	)
+	if err != nil {
+		return err
 	}
 
-	conditionsCountDp := aggregations.CountConditionsDp(scope, admissionsCleaned, globalPrivacySpec, healtcaredp.Budget.GetBudgetShare("CountConditionsDp"))
-	testResultsCountDp := aggregations.CountTestResultsDp(scope, admissionsCleaned, globalPrivacySpec, healtcaredp.Budget.GetBudgetShare("CountTestResultsDp"))
-	utils.WriteOutput(scope, conditionsCountDp, ccOutputCsvDp)
-	utils.WriteOutput(scope, testResultsCountDp, ctrOutputCsvDp)
+	switch args[0] {
+	case "CountConditions":
+		RunConditionsCount(healthcaredp.GlobalScope,
+			healthcaredp.CurrentIOArgs.OutputCsv,
+			healthcaredp.CurrentIOArgs.GenerateNonDp,
+			healthcaredp.AdmissionsCleaned)
+	case "CountTestResults":
+		RunTestResultsCount(healthcaredp.GlobalScope,
+			healthcaredp.CurrentIOArgs.OutputCsv,
+			healthcaredp.CurrentIOArgs.GenerateNonDp,
+			healthcaredp.AdmissionsCleaned)
+	}
 
 	// Execute pipeline.
-	_, err := direct.Execute(context.Background(), pipeline)
+	_, err = direct.Execute(context.Background(), healthcaredp.GlobalPipeline)
 	if err != nil {
-		log.Exitf("Execution of pipeline failed: %v", err)
+		return fmt.Errorf("error executing pipeline: %v", err)
 	}
 
-	utils.WriteHeaders(outputClean, utils.StructCsvHeaders(healtcaredp.Admission{})...)
-	if generateClear {
-		utils.WriteHeaders(ccOutputCsv, "Medical Condition", "Count")
-		utils.WriteHeaders(ctrOutputCsv, "Test Results", "Count")
+	headers, err := utils.StructCsvHeaders(model.Admission{})
+	if err != nil {
+		return fmt.Errorf("error getting headers: %v", err)
 	}
-	utils.WriteHeaders(ccOutputCsvDp, "Medical Condition", "Count(DP)")
-	utils.WriteHeaders(ctrOutputCsvDp, "Test Results", "Count(DP)")
+	utils.WriteHeaders(healthcaredp.CurrentIOArgs.OutputClean, headers...)
+	switch args[0] {
+	case "CountConditions":
+		ConditionsCountWriteHeaders(healthcaredp.CurrentIOArgs.GenerateNonDp)
+	case "CountTestResults":
+		TestResultsCountWriteHeaders(healthcaredp.CurrentIOArgs.GenerateNonDp)
+	}
+
+	return nil
+}
+
+func RunAvg(cmd *cobra.Command, args []string) (err error) {
+
+	err = healthcaredp.Budget.InitBudgetShares(
+		map[string]float64{
+			"AvgStayByWeek": 1.0,
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	switch args[0] {
+	case "AvgStayByWeek":
+		RunAvgStayByWeek(healthcaredp.GlobalScope,
+			healthcaredp.CurrentIOArgs.OutputCsv,
+			healthcaredp.CurrentIOArgs.GenerateNonDp,
+			healthcaredp.AdmissionsCleaned)
+	}
+
+	// Execute pipeline.
+	_, err = direct.Execute(context.Background(), healthcaredp.GlobalPipeline)
+	if err != nil {
+		return fmt.Errorf("error executing pipeline: %v", err)
+	}
+
+	headers, err := utils.StructCsvHeaders(model.Admission{})
+	if err != nil {
+		return fmt.Errorf("error getting headers: %v", err)
+	}
+	utils.WriteHeaders(healthcaredp.CurrentIOArgs.OutputClean, headers...)
+	switch args[0] {
+	case "AvgStayByWeek":
+		AvgStayByWeekWriteHeaders(healthcaredp.CurrentIOArgs.GenerateNonDp)
+	}
+
+	return nil
 }

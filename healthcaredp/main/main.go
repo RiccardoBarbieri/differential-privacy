@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
-	"healthcaredp/cmd"
+	"healthcaredp/cmds"
 )
 
 func main() {
 	var err error
 
-	err = cmd.RootCmd.Execute()
+	err = cmds.RootCmd.Execute()
 	if err != nil {
 		_ = fmt.Errorf("error executing command: %v", err)
 	}

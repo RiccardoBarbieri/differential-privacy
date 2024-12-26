@@ -1,9 +1,10 @@
-package healtcaredp
+package utils
 
 import (
 	"github.com/apache/beam/sdks/v2/go/pkg/beam"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
+	"healthcaredp/model"
 	"strings"
 )
 
@@ -24,7 +25,7 @@ func CleanDataset(scope beam.Scope, col beam.PCollection) beam.PCollection {
 	return nameCleaned
 }
 
-func cleanAdmissionName(admission Admission) Admission {
+func cleanAdmissionName(admission model.Admission) model.Admission {
 	titleName := capitalizeWords(admission.Name)
 	admission.Name = titleName
 	return admission

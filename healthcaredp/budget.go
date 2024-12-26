@@ -1,8 +1,10 @@
-package healtcaredp
+package healthcaredp
 
 import (
+	"fmt"
 	log "github.com/golang/glog"
 	"github.com/google/differential-privacy/privacy-on-beam/v3/pbeam"
+	"healthcaredp/utils"
 	"math"
 )
 
@@ -26,7 +28,9 @@ var epsilon = math.Log(3)
 var aggregationEpsilon = epsilon / 2
 var partitionEpsilon = epsilon - aggregationEpsilon
 
-var supportedOperations = []string{"CountConditionsDp", "CountTestResultsDp"}
+var CountOperations = []string{"CountConditions", "CountTestResults"}
+var AvgOperations = []string{"AvgStayByWeek"}
+var SupportedOperations []string
 
 var Budget DpBudget
 
@@ -36,6 +40,10 @@ func init() {
 		PartitionSelectionEpsilon: partitionEpsilon,
 		PartitionSelectionDelta:   delta,
 	}
+
+	SupportedOperations = append(SupportedOperations, CountOperations...)
+	SupportedOperations = append(SupportedOperations, AvgOperations...)
+
 	var err error
 	Budget.Delta = delta
 	Budget.Epsilon = epsilon
@@ -46,22 +54,52 @@ func init() {
 	}
 }
 
-func (db DpBudget) InitAllBudgetShares(importance ...float64) {
-	if len(importance) != len(supportedOperations) {
-		log.Fatalf("Expected %d importance values, got %d", len(supportedOperations), len(importance))
+func (db DpBudget) InitAllBudgetShares(importance map[string]float64) (err error) {
+	if len(importance) != len(SupportedOperations) {
+		fmt.Errorf("expected %d importance values, got %d", len(SupportedOperations), len(importance))
+	}
+	for _, key := range SupportedOperations {
+		if _, ok := importance[key]; !ok {
+			return fmt.Errorf("importance map missing operation: %s", key)
+		}
 	}
 	totalImportance := 0.0
 	for _, imp := range importance {
 		totalImportance += imp
 	}
-	for i, imp := range importance {
-		db.BudgetShares[supportedOperations[i]] = DpBudgetShare{
+	for key, imp := range importance {
+		db.BudgetShares[key] = DpBudgetShare{
 			AggregationEpsilon: (imp / totalImportance) * aggregationEpsilon,
 			PartitionEpsilon:   (imp / totalImportance) * partitionEpsilon,
 			AggregationDelta:   (imp / totalImportance) * delta,
 			PartitionDelta:     delta - (imp/totalImportance)*delta,
 		}
 	}
+	return nil
+}
+
+func (db DpBudget) InitBudgetShares(importance map[string]float64) (err error) {
+	if len(importance) > len(SupportedOperations) {
+		return fmt.Errorf("importance map has more than %d operations", len(SupportedOperations))
+	}
+	for key, _ := range importance {
+		if !utils.SliceContains(SupportedOperations, key) {
+			return fmt.Errorf("importance map contains unsupported operation: %s", key)
+		}
+	}
+	totalImportance := 0.0
+	for _, imp := range importance {
+		totalImportance += imp
+	}
+	for key, imp := range importance {
+		db.BudgetShares[key] = DpBudgetShare{
+			AggregationEpsilon: (imp / totalImportance) * aggregationEpsilon,
+			PartitionEpsilon:   (imp / totalImportance) * partitionEpsilon,
+			AggregationDelta:   (imp / totalImportance) * delta,
+			PartitionDelta:     delta - (imp/totalImportance)*delta,
+		}
+	}
+	return nil
 }
 
 func (db DpBudget) GetBudgetShare(operation string) DpBudgetShare {

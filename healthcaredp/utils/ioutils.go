@@ -8,7 +8,7 @@ import (
 	"github.com/apache/beam/sdks/v2/go/pkg/beam/io/textio"
 	"github.com/apache/beam/sdks/v2/go/pkg/beam/register"
 	log "github.com/golang/glog"
-	"healthcaredp"
+	"healthcaredp/model"
 
 	"io"
 	"os"
@@ -19,23 +19,32 @@ import (
 func init() {
 
 	register.Function2x0[string, beam.V](printKVConsoleFn)
-	register.Function1x0[healtcaredp.Admission](printAdmissionConsoleFn)
+	register.Function1x0[model.Admission](printAdmissionConsoleFn)
+}
+
+func LoadCleanDataset(scope beam.Scope, fileName string) beam.PCollection {
+	scope = scope.Scope("LoadCleanDataset")
+	admissions := ReadInput(scope, fileName)
+	admissionsCleaned := CleanDataset(scope, admissions)
+	return admissionsCleaned
 }
 
 // Reads from input csv file and returns a beam PCollection of Admission
 func ReadInput(scope beam.Scope, fileName string) beam.PCollection {
 	scope = scope.Scope("readInput")
 	lines := textio.Read(scope, fileName)
-	return beam.ParDo(scope, healtcaredp.CreateAdmissionFn, lines)
+	return beam.ParDo(scope, model.CreateAdmissionFn, lines)
 }
 
 func WriteOutput(scope beam.Scope, col beam.PCollection, fileName string) {
-	scope = scope.Scope("writeOutput")
+	scope = scope.Scope("WriteOutput")
 	if typex.IsKV(col.Type()) {
 		textio.Write(scope, fileName, beam.ParDo(scope, formatKVCsvFn, col))
 
-	} else if col.Type().Type() == reflect.TypeOf(healtcaredp.Admission{}) {
+	} else if col.Type().Type() == reflect.TypeOf(model.Admission{}) {
 		textio.Write(scope, fileName, beam.ParDo(scope, formatStructCsvFn, col))
+	} else {
+		panic("unsupported output type: " + fmt.Sprintf("%T", col.Type()) + " filename: " + fileName)
 	}
 }
 
@@ -103,7 +112,7 @@ func PrintConsole(scope beam.Scope, col beam.PCollection) {
 	scope = scope.Scope("PrintConsole")
 	if typex.IsKV(col.Type()) {
 		beam.ParDo0(scope, printKVConsoleFn, col)
-	} else if col.Type().Type() == reflect.TypeOf(healtcaredp.Admission{}) {
+	} else if col.Type().Type() == reflect.TypeOf(model.Admission{}) {
 		beam.ParDo0(scope, printAdmissionConsoleFn, col)
 	}
 }
@@ -114,6 +123,6 @@ func printKVConsoleFn(k string, v beam.V) {
 }
 
 // printAdmissionConsoleFn is a DoFn that prints Admission objects to the console and returns the printed value.
-func printAdmissionConsoleFn(admission healtcaredp.Admission) {
+func printAdmissionConsoleFn(admission model.Admission) {
 	fmt.Printf("%s\n", admission)
 }
