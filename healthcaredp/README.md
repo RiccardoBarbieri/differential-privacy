@@ -4,6 +4,8 @@
 
 1. Ensure you have Go SDK installed on your system. You can download it from [golang.org](https://golang.org/dl/).
 2. Make sure you have set up your Go workspace correctly.
+3. Install make to use the Makefile build and run commands 
+4. The current build system assumes linux OS distro
 
 ## Steps to Run the Program
 
