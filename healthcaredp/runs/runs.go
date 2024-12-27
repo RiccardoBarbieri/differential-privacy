@@ -11,7 +11,6 @@ import (
 )
 
 func RunAll(cmd *cobra.Command, args []string) (err error) {
-
 	err = healthcaredp.Budget.InitAllBudgetShares(
 		map[string]float64{
 			"CountConditions":  1.0,
@@ -95,7 +94,6 @@ func RunCounts(cmd *cobra.Command, args []string) (err error) {
 }
 
 func RunAvg(cmd *cobra.Command, args []string) (err error) {
-
 	err = healthcaredp.Budget.InitBudgetShares(
 		map[string]float64{
 			"AvgStayByWeek": 1.0,

@@ -12,6 +12,7 @@ type IOArgs struct {
 	OutputCsv     string
 	OutputClean   string
 	GenerateNonDp bool
+	Args          []string
 }
 
 // CurrentIOArgs stores the flags, parsed by PreRun on RootCmd

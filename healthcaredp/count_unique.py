@@ -1,13 +1,21 @@
 from pprint import pprint
+from datetime import datetime
+import csv
+import pandas as pd
 
 with open('data/healthcare_cleaned.csv') as f:
     lines = f.readlines()
     header = lines[0]
     lines = lines[1:]
-    lines_split = [[*i.split(',')] for i in lines]
+    csv_reader = csv.reader(lines)
+    lines_split = [i for i in csv_reader]
     names = [i[0] for i in lines_split]
     conditions = [i[4] for i in lines_split]
     test_results = [i[14] for i in lines_split]
+
+    date_fmt = "%Y-%m-%dT%H:%M:%SZ"
+    admissions = [datetime.strptime(i[5], date_fmt) for i in lines_split]
+    discharges = [datetime.strptime(i[12], date_fmt) for i in lines_split]
 
 # Privacy Key -> Name
 
@@ -41,8 +49,8 @@ names_count_tuples.sort(key=lambda x: x[1], reverse=True)
 conditions_count_tuples = [(k, len(v)) for k, v in conditions_map.items()]
 conditions_count_tuples.sort(key=lambda x: x[1], reverse=True)
 
-test_results_maps = [(k, len(v)) for k, v in test_results_maps.items()]
-test_results_maps.sort(key=lambda x: x[1], reverse=True)
+test_results_tuples = [(k, len(v)) for k, v in test_results_maps.items()]
+test_results_tuples.sort(key=lambda x: x[1], reverse=True)
 
 print(f"Count Parameters: CountConditionsDp")
 # Maximum number of times a privacy key appears in the dataset, therefore the max number of times a key can contribute to a single partition
@@ -54,7 +62,43 @@ print(f"\tMaxPartitionsContributed = {conditions_count_tuples[0][1]}")
 print(f"Count Parameters: CountTestResults")
 print(f"\tMaxValue = {names_count_tuples[0][1]}")
 # Maximum number of test results that a single privacy key contributes to
-print(f"\tMaxPartitionsContributed = {test_results_maps[0][1]}")
+print(f"\tMaxPartitionsContributed = {test_results_tuples[0][1]}")
+
+durations = [dis - adm for adm, dis in zip(admissions, discharges)]
+week_duration_tuples = [(adm.isocalendar()[1], duration) for duration, adm in zip(durations, admissions)]
+df = pd.DataFrame(week_duration_tuples, columns=['week of year', 'duration'])
+groups_mean = df.groupby(by="week of year").mean()
+# pprint(groups_mean)
+
+admission_week_map = {}
+week_admission_map = {}
+for name, admission in zip(names, admissions):
+    week_of_year = admission.isocalendar()[1]
+    if name in admission_week_map:
+        admission_week_map[name].add(week_of_year)
+    else:
+        admission_week_map[name] = {week_of_year}
+
+    if week_of_year in week_admission_map:
+        week_admission_map[week_of_year].add(name)
+    else:
+        week_admission_map[week_of_year] = {name}
+
+admission_week_tuples = [(k, len(v)) for k, v in admission_week_map.items()]
+admission_week_tuples.sort(key=lambda x: x[1], reverse=True)
+
+week_admission_tuples = [(k, v) for k, v in week_admission_map.items()]
+week_admission_tuples.sort(key=lambda x: x[1], reverse=True)
+
+
+
+print(f"Avg Parameters: MeanStayByWeek")
+print(f"\tMaxValue = {names_count_tuples[0][1]}")
+# Maximum number of week of year that a single privacy key contributes to
+print(f"\tMaxPartitionsContributed = {admission_week_tuples[0][1]}")
+# Maximum number of privacy keys that contribute to a single week of year
+print(f"\tMaxContributionsPerPartition = {week_admission_tuples[0][1]}")
+
 
 
 

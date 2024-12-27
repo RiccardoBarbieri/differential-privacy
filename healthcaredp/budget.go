@@ -56,7 +56,7 @@ func init() {
 
 func (db DpBudget) InitAllBudgetShares(importance map[string]float64) (err error) {
 	if len(importance) != len(SupportedOperations) {
-		fmt.Errorf("expected %d importance values, got %d", len(SupportedOperations), len(importance))
+		return fmt.Errorf("expected %d importance values, got %d", len(SupportedOperations), len(importance))
 	}
 	for _, key := range SupportedOperations {
 		if _, ok := importance[key]; !ok {
