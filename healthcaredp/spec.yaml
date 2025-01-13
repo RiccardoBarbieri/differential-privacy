@@ -12,7 +12,6 @@ pipelinedp:
     aggregation_share: 0.5
 
   # TODO: define processing operations format
-  # is the name of the operation enough? it is simpler to support only preimplemented ops
   operations:
     - name: CountTestResults
       type: count
