@@ -1,0 +1,31 @@
+pipelinedp:
+  # input: data directory, input filename
+  # output: base output filename, add cleaned and other suffixes
+  data_dir: "data"
+  input: "healthcare_dataset.csv"
+  output_base_name: "output.csv"
+  generate_non_dp: true
+
+  privacy_spec:
+    delta: 1e-5
+    epsilon: 0.47712125472
+    aggregation_share: 0.5
+
+  # TODO: define processing operations format
+  # is the name of the operation enough? it is simpler to support only preimplemented ops
+  operations:
+    - name: CountTestResults
+      type: count
+      column: TestResults
+      generate_non_dp: true
+    - name: CountConditions
+      type: count
+      column: Conditions
+      generate_non_dp: true
+    - name: MeanStayByWeek
+      type: mean
+      column: StayByWeek
+      generate_non_dp: true
+
+
+
