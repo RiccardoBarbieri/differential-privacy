@@ -92,7 +92,7 @@ week_admission_tuples.sort(key=lambda x: x[1], reverse=True)
 
 
 
-print(f"Avg Parameters: MeanStayByWeek")
+print(f"Mean Parameters: MeanStayByWeek")
 print(f"\tMaxValue = {names_count_tuples[0][1]}")
 # Maximum number of week of year that a single privacy key contributes to
 print(f"\tMaxPartitionsContributed = {admission_week_tuples[0][1]}")

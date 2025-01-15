@@ -1,4 +1,4 @@
-package cmds
+package command
 
 import (
 	"github.com/spf13/cobra"
@@ -16,7 +16,7 @@ func init() {
 
 	RootCmd.AddCommand(AllCmd)
 	RootCmd.AddCommand(CountCmd)
-	RootCmd.AddCommand(AvgCmd)
+	RootCmd.AddCommand(MeanCmd)
 
 	RootCmd.PersistentFlags().String("input-csv", "", "Name of the csv file that contains the healthcare data")
 	RootCmd.PersistentFlags().String("output-csv", "", "Base name of the output csv file that will contain output data (ex. output.csv)")

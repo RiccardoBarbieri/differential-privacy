@@ -22,6 +22,10 @@ type DpBudget struct {
 	Epsilon      float64
 }
 
+var SupportedOperations []string
+
+var Budget DpBudget
+
 const delta = 1e-5
 
 var epsilon = math.Log(3)
@@ -29,12 +33,10 @@ var aggregationEpsilon = epsilon / 2
 var partitionEpsilon = epsilon - aggregationEpsilon
 
 var CountOperations = []string{"CountConditions", "CountTestResults"}
-var AvgOperations = []string{"AvgStayByWeek"}
-var SupportedOperations []string
-
-var Budget DpBudget
+var MeanOperations = []string{"MeanStayByWeek"}
 
 func init() {
+
 	pSpecParams := pbeam.PrivacySpecParams{
 		AggregationEpsilon:        aggregationEpsilon,
 		PartitionSelectionEpsilon: partitionEpsilon,
@@ -42,7 +44,7 @@ func init() {
 	}
 
 	SupportedOperations = append(SupportedOperations, CountOperations...)
-	SupportedOperations = append(SupportedOperations, AvgOperations...)
+	SupportedOperations = append(SupportedOperations, MeanOperations...)
 
 	var err error
 	Budget.Delta = delta

@@ -15,7 +15,7 @@ func RunAll(cmd *cobra.Command, args []string) (err error) {
 		map[string]float64{
 			"CountConditions":  1.0,
 			"CountTestResults": 1.0,
-			"AvgStayByWeek":    1.0,
+			"MeanStayByWeek":   1.0,
 		},
 	)
 	if err != nil {
@@ -93,10 +93,10 @@ func RunCounts(cmd *cobra.Command, args []string) (err error) {
 	return nil
 }
 
-func RunAvg(cmd *cobra.Command, args []string) (err error) {
+func RunMean(cmd *cobra.Command, args []string) (err error) {
 	err = healthcaredp.Budget.InitBudgetShares(
 		map[string]float64{
-			"AvgStayByWeek": 1.0,
+			"MeanStayByWeek": 1.0,
 		},
 	)
 	if err != nil {
@@ -104,8 +104,8 @@ func RunAvg(cmd *cobra.Command, args []string) (err error) {
 	}
 
 	switch args[0] {
-	case "AvgStayByWeek":
-		RunAvgStayByWeek(healthcaredp.GlobalScope,
+	case "MeanStayByWeek":
+		MeanStayByWeek(healthcaredp.GlobalScope,
 			healthcaredp.CurrentIOArgs.OutputCsv,
 			healthcaredp.CurrentIOArgs.GenerateNonDp,
 			healthcaredp.AdmissionsCleaned)
@@ -123,8 +123,8 @@ func RunAvg(cmd *cobra.Command, args []string) (err error) {
 	}
 	utils.WriteHeaders(healthcaredp.CurrentIOArgs.OutputClean, headers...)
 	switch args[0] {
-	case "AvgStayByWeek":
-		AvgStayByWeekWriteHeaders(healthcaredp.CurrentIOArgs.GenerateNonDp)
+	case "MeanStayByWeek":
+		MeanStayByWeekWriteHeaders(healthcaredp.CurrentIOArgs.GenerateNonDp)
 	}
 
 	return nil

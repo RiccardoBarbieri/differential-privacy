@@ -8,6 +8,21 @@ import (
 	"strings"
 )
 
+// CleanDataset applies cleaning operations on the input dataset to the pipeline.ì
+//
+// Parameters:
+//   - scope: A beam.Scope object representing the current Apache Beam pipeline scope.
+//   - col: A beam.PCollection containing the input dataset to be cleaned.
+//
+// Returns:
+//
+//	A beam.PCollection containing the cleaned dataset with standardized admission names.
+func CleanDataset(scope beam.Scope, col beam.PCollection) beam.PCollection {
+	scope = scope.Scope("CleanDataset")
+	nameCleaned := beam.ParDo(scope, cleanAdmissionName, col)
+	return nameCleaned
+}
+
 func capitalizeWords(s string) string {
 	lower := strings.TrimSpace(strings.ToLower(s))
 	words := strings.Fields(lower)
@@ -17,12 +32,6 @@ func capitalizeWords(s string) string {
 		words[i] = caser.String(word) // Apply title case to each word
 	}
 	return strings.Join(words, " ")
-}
-
-func CleanDataset(scope beam.Scope, col beam.PCollection) beam.PCollection {
-	scope = scope.Scope("CleanDataset")
-	nameCleaned := beam.ParDo(scope, cleanAdmissionName, col)
-	return nameCleaned
 }
 
 func cleanAdmissionName(admission model.Admission) model.Admission {
