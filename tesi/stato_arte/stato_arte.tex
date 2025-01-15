@@ -1,0 +1,23 @@
+\chapter{Stato dell'arte}
+\section{Introduzione alla Differential Privacy}
+La privacy differenziale (DP) è un framework per la progettazione di algoritmi utilizzati per la creazione di distribuzioni di dati aggregati su dataset; gli algoritmi che rispettano la definizione di DP sono in grado di limitare l'impatto che la partecipazione di un singolo individuo ha sui risultati dell'analisi, rendendo \textit{quasi} impossibile confermare o negare la presenza di un soggetto all'interno del dataset utilizzato per l'aggregazione di dati.
+
+Questo risultato è ottenuto grazie all'aggiunta di rumore casuale campionato da una distribuzione di probabilità opportuna ai risultati dell'elaborazione dei dati.
+
+Lo scopo principale degli algoritmi DP è quello di poter garantire ai partecipanti di un dataset che la privacy dei dati forniti non potrà essere violata a seguito di analisi effettuate sul dataset, indipendentemente dalla disponibilità di altre fonti di informazioni su uno specifico individuo \cite[p.~5]{TCS-042}.
+
+\subsection{Definizione}
+La definizione seguente costituisce un formalismo più ristretto rispetto alla definizione completa, quest'ultima include un secondo parametro $\mathcal{\delta}$, la cui funzione e utilità verrà discussa in seguito.
+
+Una trasformazione $\mathcal{M}$ è considerata $\epsilon$-differenzialmente privata se, per ogni dataset $D_1$ e $D_2$ che differiscono solo per un individuo, vale la seguente disequazione \cite{10.1007/11681878_14}:
+\begin{equation}
+  \Pr[\mathcal{M}(D_1) \in S] \leq e^{\epsilon} \cdot \Pr[\mathcal{M}(D_2) \in S]
+  \label{eq:differential_privacy}
+\end{equation}
+
+La definizione è costituita da tre termini:
+\begin{itemize}
+    \item $\Pr[\mathcal{M}(D_1) \in S]$
+    \item $\Pr[\mathcal{M}(D_2) \in S]$
+    \item $e^\epsilon$
+\end{itemize}

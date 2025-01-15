@@ -1,0 +1,62 @@
+\documentclass[12pt, twoside]{book}
+\usepackage[a4paper,width=150mm,top=25mm,bottom=25mm,bindingoffset=6mm]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+\usepackage{caption}
+\usepackage{forest}
+\usepackage{fancyhdr}
+\usepackage{newlfont}
+\usepackage{float}
+\usepackage{xcolor}
+\usepackage[nottoc]{tocbibind}
+\usepackage{emptypage}
+\usepackage{titlesec}
+\usepackage[T1]{fontenc}
+\usepackage{blindtext, array}
+\usepackage[sorting=none,backend=bibtex]{biblatex}
+\usepackage{csquotes}
+\usepackage{pdfpages}
+\usepackage{listings}
+\usepackage{amsmath}
+\usepackage[cache=false]{minted}
+\usepackage{setspace}
+\usepackage[hidelinks]{hyperref}
+\usepackage{outline}
+\usepackage{enumitem}
+\setlist{nosep}
+
+% Stile di pagina
+% \pagestyle{fancy}
+\usemintedstyle{colorful}
+
+\definecolor{lightgray}{gray}{0.95}
+
+% Stile dei titoli dei capitoli
+\definecolor{gray75}{gray}{0.75}
+\newcommand{\hsp}{\hspace{20pt}}
+\titleformat{\chapter}[hang]
+{\Huge\bfseries}
+{\thechapter\hsp\textcolor{gray75}{|}\hsp}
+{0pt}
+{\Huge\bfseries}
+
+% Bibliografia
+\addbibresource{bibliografia.bib}
+
+\onehalfspacing
+\begin{document}
+
+\input{frontespizio}
+
+\phantomsection
+\listoffigures
+
+\tableofcontents
+
+\input{introduzione/introduzione}
+\input{stato_arte/stato_arte}
+
+
+\phantomsection
+\printbibliography[heading=bibintoc]
+\end{document}
