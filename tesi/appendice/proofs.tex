@@ -1,0 +1,14 @@
+\chapter{Dimostrazioni}
+\begin{proof}[\ref{eq:laplace_mechanism}]
+\label{proof:laplace_mechanism}
+Si definisca $x \in \mathbb{N}^k$ e $y \in \mathbb{N}^k$ tali che $||x - y||_1 \le 1$, e si consideri una funzione $f \colon \mathbb{N}^{|\mathcal{X}|} \to \mathbb{R}^k$. Si indichi con $p_x$ la funzione di densità di probabilità $\mathcal{M}_L(x,f,\varepsilon)$ e con $p_y$ la funzione di densità di probabilità $\mathcal{M}_L(y,f,\varepsilon)$. Comparando le due funzioni a un punto arbitrario $z \in \mathbb{R}^k$:
+\begin{align*}
+    \frac{p_x(z)}{p_y(z)} &= \prod_{i = 1}^{k}\left(\frac{\exp{\left(-\frac{\varepsilon |f(x)_i - z_i|}{\Delta f}\right)}}{\exp{\left(-\frac{\varepsilon |f(y)_i - z_i|}{\Delta f}\right)}}\right)\\
+    &= \prod_{i = 1}^{k}\exp{\left(\frac{\varepsilon(|f(y)_i - z_i| - |f(x)_i - z_i|)}{\Delta f}\right)}\\
+    \text{Applicando la disuguaglianza triangolare:}\\
+    &\le \prod_{i = 1}^{k}\exp{\left(\frac{\varepsilon|f(x)_i-f(y)_i|}{\Delta f}\right)}\\
+    &= \exp{\left(\frac{\varepsilon\cdot ||f(x) - f(y)||_1}{\Delta f}\right)}\\
+    \text{Per la definizione di sensitività:}\\
+    &\le e^\varepsilon
+\end{align*}
+\end{proof}

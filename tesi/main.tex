@@ -3,7 +3,6 @@
 \usepackage[utf8]{inputenc}
 \usepackage[italian]{babel}
 \usepackage{caption}
-\usepackage{forest}
 \usepackage{fancyhdr}
 \usepackage{newlfont}
 \usepackage{float}
@@ -23,6 +22,17 @@
 \usepackage[hidelinks]{hyperref}
 \usepackage{outline}
 \usepackage{enumitem}
+\usepackage{mathtools}
+\usepackage{xparse}
+\usepackage{svg}
+\usepackage{tikz}
+\usepackage{lipsum}
+\usepackage[toc,page]{appendix}
+\usepackage{amsfonts}
+\usetikzlibrary{shapes.geometric, arrows, positioning}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \setlist{nosep}
 
 % Stile di pagina
@@ -40,6 +50,25 @@
 {0pt}
 {\Huge\bfseries}
 
+% lnorm command
+\DeclarePairedDelimiter{\norm}{\lVert}{\rVert}
+
+\newenvironment{equationderivation}[1][]{%
+    \begin{trivlist}%
+    \item[]\textbf{Passaggi #1:}%
+}{%
+    \end{trivlist}%
+}
+
+\newenvironment{proof}[1][]{%
+    \begin{trivlist}%
+    \item[]\textbf{Dimostrazione #1:}%
+}{%
+    \end{trivlist}%
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % Bibliografia
 \addbibresource{bibliografia.bib}
 
@@ -56,6 +85,10 @@
 \input{introduzione/introduzione}
 \input{stato_arte/stato_arte}
 
+\begin{appendices}
+\input{appendice/steps}
+\input{appendice/proofs}
+\end{appendices}
 
 \phantomsection
 \printbibliography[heading=bibintoc]

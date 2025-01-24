@@ -1,0 +1,18 @@
+\chapter{Derivazione equazioni}
+\begin{equationderivation}[\ref{eq:mid_information_gain}]
+\label{eqd:information_gain_derivation}
+\begin{align*}
+    e^{-\varepsilon} \cdot \frac{\Pr[D = D_{in}]}{\Pr[D = D_{out}]} &\le \frac{\Pr[D = D_{in} | \mathcal{M}(D) = O]}{\Pr[D = D_{out} | \mathcal{M}(D) = O]} \le e^{\varepsilon} \cdot \frac{\Pr[D = D_{in}]}{\Pr[D = D_{out}]}\\
+    e^{-\varepsilon} \cdot \frac{\Pr[D = D_{in}]}{1-\Pr[D = D_{in}]} &\le \frac{\Pr[D = D_{in} | \mathcal{M}(D) = O]}{1-\Pr[D = D_{in} | \mathcal{M}(D) = O]} \le e^\varepsilon \cdot \frac{\Pr[D = D_{in}]}{1-\Pr[D = D_{in}]}
+\end{align*}
+Si considera solo il lato destro dato che le due espressioni sono simmetriche.
+\begin{align*}
+    \Pr[D = D_{in} | \mathcal{M}(D) = O] &\le \frac{e^\varepsilon \cdot \Pr[D = D_{in}]}{1 - \Pr[D = D_{in}]} - \Pr[D = D_{in} | \mathcal{M}(D) = O] \cdot \frac{e^\varepsilon \cdot \Pr[D = D_{in}]}{1 - \Pr[D = D_{in}]}\\
+    \Pr[D = D_{in} | \mathcal{M}(D) = O] \cdot &\left(\frac{1 - \Pr[D = D_{in}] + e^\varepsilon \cdot \Pr[D = D_{in}]}{1 - \Pr[D = D_{in}]}\right) \le \frac{e^\varepsilon \cdot \Pr[D = D_{in}]}{1-\Pr[D = D_{in}]}\\
+    \Pr[D = D_{in} | \mathcal{M}(D) = O] &\le \frac{e^\varepsilon \cdot \Pr[D = D_{in}]}{1 - \Pr[D = D_{in}] + e^\varepsilon \cdot \Pr[D = D_{in}]}
+\end{align*}
+Sostituendo $e^{-\varepsilon}$ a ogni istanza di $e^\varepsilon$ si ottiene il lato sinistro, mettendo tutto insieme:
+\begin{equation*}
+    \frac{\Pr[D = D_{in}]}{e^\varepsilon + (1 - e^\varepsilon) \cdot \Pr[D = D_{in}]} \le \Pr[D = D_{in} | \mathcal{M}(D) = O] \le \frac{e^\varepsilon \cdot \Pr[D = D_{in}]}{1 - (e^\varepsilon - 1) \cdot \Pr[D = D_{in}]}
+\end{equation*}
+\end{equationderivation}
