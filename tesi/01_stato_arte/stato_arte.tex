@@ -1,0 +1,65 @@
+\chapter{Stato dell'arte}
+
+\section{Introduzione alla Differential Privacy}
+La privacy differenziale (DP) è un rigoroso framework matematico per la progettazione di algoritmi utilizzati per la creazione di distribuzioni di dati aggregati su dataset; gli algoritmi che rispettano la definizione di DP sono in grado di limitare l'impatto che la partecipazione di un singolo individuo ha sui risultati dell'analisi aggiungendo una ragionevole quantità di rumore casuale, rendendo \textit{quasi} impossibile confermare o negare la presenza di un soggetto all'interno del dataset utilizzato per l'aggregazione di dati. Questa proprietà è cruciale per prevenire che eventuali attaccanti possano inferire informazioni sensibili su individui partecipanti al dataset, anche in presenza di informazioni ausiliari.
+
+La motivazione alla base della privacy differenziale deriva dalla necessità di bilanciare l'utilità dei dati con la protezione della privacy in un mondo sempre più incentrato sui dati. Con la proliferazione di machine learning, big data e generale condivisione di dati, le tecniche di anonimizzazione tradizionali si sono rivelate inadeguate. Queste tecniche falliscono nel garantire privacy ai soggetti di un dataset a causa della disponibilità di dati da fonti come social network \cite{deanon-socialnet}, piattaforme di streaming \cite{deanon-netflix} e dispositivi di geo-localizzazione \cite{deanon-geodata}, permettendo a un attaccante di associare dati sensibili agli individui.
+
+\section{Contesto storico}
+Il concetto di privacy differenziale (DP) è stato introdotto formalmente da Cynthia Dwork \cite{10.1007/11681878_14}, dove viene formalizzata la definizione di $\varepsilon$-privacy differenziale e dimostrato come l'aggiunta di rumore calibrato alla sensitività di una funzione possa proteggere la privacy individuale mantenendo un certo grado di utilità dei dati.
+
+\subsection{Metodi tradizionali per la protezione della privacy}
+Prima dell'avvento della privacy differenziale, l'anonimizzazione dei dati si basava su tecniche come k-anonimity, l-diversity e t-closeness; questi metodi sono in grado di prevenire la re-identificazione dei soggetti senza limitare la divulgazione dei singoli valori degli attributi, imponendo regole sulla distribuzione e quantità di valori distinti degli attributi rilasciati. Queste tecniche permettono di creare distribuzioni di dati che, prese da sole, garantiscono un alto livello di privacy; sono tuttavia vulnerabili ad attacchi che sfruttano informazioni ausiliarie.
+
+Dato che un editore di dati non è in grado di controllare quali informazioni aggiuntive verranno rilasciate in futuro sui partecipanti ai propri dataset, la privacy differenziale costituisce una soluzione ideale rispetto ai metodi tradizionali, data la particolare resistenza agli attacchi che si basano sulla disponibilità di informazioni aggiuntive.
+
+Un'altra differenza fondamentale che la privacy differenziale presenta rispetto a metodi tradizionali è la possibilità di quantificare il livello di privacy perso con una distribuzione di dati tramite un apposito parametro; questa caratteristica permette di stabilire e tracciare un budget di privacy per uno specifico dataset al contrario dei metodi tradizionali sopra citati.
+
+\section{Utilizzi privacy differenziale}
+Il framework della privacy differenziale è stato adottato in diversi ambiti, a partire dall'analisi lessicale per sistemi di suggerimenti per tastiere alla raccolta di informazioni sull'utilizzo di piattaforme web; di seguito verranno documentati alcuni esempi.
+
+Apple utilizza la privacy differenziale con modello locale per anonimizzare i dati raccolti da dispositivi iOS e macOS; questi dati vengono utilizzati per migliorare le funzionalità di suggerimenti per tastiera e identificazione di siti web che causano interruzioni o altri errori al browser Safari \cite{appledpatscale}.
+
+Google ha utilizzato la privacy differenziale in svariati contesti, in particolare ha spesso utilizzato il framework per analisi dall'enorme mole di dati GPS ottenuti dai dispositivi con un account Google. Una di queste analisi, Community Mobility Reports, nasce per quantificare cambiamenti in pattern di mobilità durante la pandemia COVID-19: qui la privacy differenziale permette di non pubblicare mai valori assoluti sulle visite \cite{googlecovid19communitymobility}.
+
+La Audience Engagements API di Linkedin costituisce un altro interessante esempio di applicazione del framework perché si tratta di un'implementazione del modello distribuito interattivo: diversamente dagli esempi precedenti il rilascio dei dati non avviene tutto contemporaneamente, un \textit{analista} richiede i dati di cui necessita in modo incrementale; questo sistema impone limitazioni nella quantità di dati accessibili in un dato periodo per poter garantire un certo livello di anonimizzazione \cite{rogers2020linkedinsaudienceengagementsapi}.
+
+\section{Privacy differenziale e machine learning}
+Negli ultimi anni, modelli di machine learning vengono dispiegati sempre più spesso in ambiti che hanno a che fare con domini sensibili come sanità, finanza e social network, che spesso forniscono dati che contengono informazioni riservate. L'allenamento di modelli ML su dati sensibili può portare, durante il loro utilizzo, alla fuoriuscita di questi dati \cite{Zhang_2023mlprivacy} sfruttando tecniche come model inversion \cite{OWASPmlinversion:online} e membership inference \cite{OWASPmembinference:online}; queste vulnerabilità presentano un rischio significativo per la privacy degli individui e per la sicurezza delle organizzazioni che gestiscono tali dati.
+
+Per sopperire a queste vulnerabilità, sono state sviluppate diverse tecniche che incorporano la privacy differenziale durante l'addestramento o durante l'inferenza sui dati.
+
+\subsection{Differentially Private Stochastic Gradient Descent}
+
+Uno dei primi esempi di questi metodi è la tecnica \textit{Differentially Private Stochastic Gradient Descent} che consiste in una variante dell'algoritmo SGD standard che prevede l'aggiunta di rumore accuratamente calibrato ai gradienti a ogni iterazione del processo di addestramento così come la limitazione degli stessi per limitare la loro sensitività \cite{Abadi_2016dpsgd}; questa tecnica è usata per addestrare modelli di deep learning.
+
+\subsection{Private Aggregation of Teacher Ensembles}
+
+Un altro approccio a questo problema nell'ambito della classificazione è \textit{Private Aggregation of Teacher Ensembles}, tecnica che addestra un modello \textit{studente} utilizzando i dati forniti da un insieme di modelli \textit{insegnanti} addestrati su set disgiunti del dataset iniziale; l'output fornito dall'insieme di insegnanti è reso privato con l'aggiunta di rumore opportunamente calibrato \cite{papernot2018scalableprivatelearningpate}.
+
+\subsection{Private Federated Learning}
+L'approccio di federated learning consente di allenare un modello di machine learning in maniera distribuita, senza dover condividere i dati utilizzati per l'addestramento; i client condividono il risultato dell'allenamento con un server centrale che agisce da aggregatore creando un unico modello.
+
+Questa tecnica da sola garantisce un certo livello di privacy nei dati dato che non è necessario che l'aggregatore abbia accesso al dataset completo; le garanzie di privacy di questo modello possono tuttavia essere migliorate condividendo gli aggiornamenti dei modelli locali al server dopo averli mascherati con un algoritmo differenzialmente privato. Il rumore aggiunto assicura che la contribuzione di una singola voce del dataset non possa essere inferita facilmente \cite{peterson2019privatefederatedlearningdomain}.
+
+\section{Strumenti per la privacy differenziale}
+Negli ultimi anni sono nati vari strumenti per permettere a utenti non tecnici di creare release di dati protette dalle garanzie offerte dalla privacy differenziale.
+
+Nell'ambito open source, i framework più utilizzati sono OpenDP e le Google Differential Privacy Libraries.
+
+Uno degli strumenti più diffusi è \textit{OpenDP}, una libreria open source sviluppata dall'Harvard University, che fornisce una suite di algoritmi per l'analisi statistica, ed è basata parzialmente sulle librerie di Google. Offre implementazioni in Rust e Python così come un'interfaccia SQL per integrare la libreria con workflow esistenti \cite{opendp}.
+
+Le librerie di Google sono un insieme di strumenti per realizzare applicazioni che includono l'utilizzo della privacy differenziale; Google fornisce una libreria di elementi base in Go, Java e C++ che include le primitive per realizzare aggregazioni differenzialmente private per l'aggiunta di rumore calibrato.\\
+Questi elementi costituiscono la base del framework Privacy on Beam, un framework che integra tecniche di privacy differenziale all'interno di pipeline di elaborazione dati composte con Apache Beam.\\
+In questo pacchetto di Google sono inclusi anche componenti per la gestione del budget della privacy e per effettuare verifiche formali sulle garanzie offerte dalla privacy differenziale.
+
+Passando a strumenti enterprise, Tumult Labs propone una soluzione per applicazioni industriali ad alta scalabilità basata su Apache Spark distribuita sotto forma di una libreria Python. Offrono soluzioni mirate al settore pubblico nel rispetto delle normative vigenti e al settore finanziario \cite{tumultanalytics}.
+
+In questo lavoro di tesi si mira a creare uno strumento basato su Privacy on Beam con l'obiettivo di sviluppare una soluzione che consenta la creazione di release di dati differenzialmente private di piccoli-medi dataset tramite una semplice interfaccia da linea di comando e file di configurazione. Questo strumento è pensato per essere adatto a progetti di piccola entità, ad esempio per semplificare la creazione di release di dati per gruppi di ricerca, piccoli media outlet o interne a un'azienda.
+
+
+
+
+
+
+
