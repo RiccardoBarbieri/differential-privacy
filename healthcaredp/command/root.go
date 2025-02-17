@@ -17,24 +17,25 @@ func init() {
 	RootCmd.AddCommand(AllCmd)
 	RootCmd.AddCommand(CountCmd)
 	RootCmd.AddCommand(MeanCmd)
+	RootCmd.AddCommand(FromFileCmd)
 
 	RootCmd.PersistentFlags().String("input-csv", "", "Name of the csv file that contains the healthcare data")
 	RootCmd.PersistentFlags().String("output-csv", "", "Base name of the output csv file that will contain output data (ex. output.csv)")
 	RootCmd.PersistentFlags().String("output-clean", "", "Name of the output csv file that will contain the cleaned dataset")
 	RootCmd.PersistentFlags().Bool("generate-non-dp", false, "Generate non-differentially private data")
 
-	var err error
-	err = RootCmd.MarkFlagRequired("input-csv")
-	if err != nil {
-		return
-	}
-	err = RootCmd.MarkFlagRequired("output-csv")
-	if err != nil {
-		return
-	}
-	err = RootCmd.MarkFlagRequired("output-clean")
-	if err != nil {
-		return
-	}
+	//var err error
+	//err = RootCmd.MarkPersistentFlagRequired("input-csv")
+	//if err != nil {
+	//	return
+	//}
+	//err = RootCmd.MarkPersistentFlagRequired("output-csv")
+	//if err != nil {
+	//	return
+	//}
+	//err = RootCmd.MarkPersistentFlagRequired("output-clean")
+	//if err != nil {
+	//	return
+	//}
 	RootCmd.SilenceUsage = true
 }

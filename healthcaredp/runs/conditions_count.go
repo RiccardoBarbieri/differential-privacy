@@ -4,7 +4,7 @@ import (
 	"github.com/apache/beam/sdks/v2/go/pkg/beam"
 	"healthcaredp"
 	"healthcaredp/aggregations"
-	"healthcaredp/utils"
+	"healthcaredp/model"
 	"strings"
 )
 
@@ -20,16 +20,16 @@ func RunConditionsCount(scope beam.Scope, outputCsv string, generateClear bool, 
 
 	if generateClear {
 		conditionsCount := aggregations.CountConditions(scope, admissions)
-		utils.WriteOutput(scope, conditionsCount, conditionsCountOutputCsv)
+		model.WriteOutput(scope, conditionsCount, conditionsCountOutputCsv)
 	}
 
 	conditionsCountDp := aggregations.CountConditionsDp(scope, admissions, healthcaredp.Budget)
-	utils.WriteOutput(scope, conditionsCountDp, conditionsCountOutputCsvDp)
+	model.WriteOutput(scope, conditionsCountDp, conditionsCountOutputCsvDp)
 }
 
 func ConditionsCountWriteHeaders(generateClear bool) {
 	if generateClear {
-		utils.WriteHeaders(conditionsCountOutputCsv, "Medical Condition", "Count")
+		model.WriteHeaders(conditionsCountOutputCsv, "Medical Condition", "Count")
 	}
-	utils.WriteHeaders(conditionsCountOutputCsvDp, "Medical Condition", "Count(DP)")
+	model.WriteHeaders(conditionsCountOutputCsvDp, "Medical Condition", "Count(DP)")
 }

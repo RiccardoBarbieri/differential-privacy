@@ -4,7 +4,7 @@ import (
 	"github.com/apache/beam/sdks/v2/go/pkg/beam"
 	"healthcaredp"
 	"healthcaredp/aggregations"
-	"healthcaredp/utils"
+	"healthcaredp/model"
 	"strings"
 )
 
@@ -20,16 +20,16 @@ func MeanStayByWeek(scope beam.Scope, outputCsv string, generateClear bool, admi
 
 	if generateClear {
 		meanStayByWeek := aggregations.MeanStayByWeek(scope, admissions)
-		utils.WriteOutput(scope, meanStayByWeek, stayByWeekMeanOutputCsv)
+		model.WriteOutput(scope, meanStayByWeek, stayByWeekMeanOutputCsv)
 	}
 
 	meanStayByWeekDp := aggregations.MeanStayByWeekDp(scope, admissions, healthcaredp.Budget)
-	utils.WriteOutput(scope, meanStayByWeekDp, stayByWeekMeanOutputCsvDp)
+	model.WriteOutput(scope, meanStayByWeekDp, stayByWeekMeanOutputCsvDp)
 }
 
 func MeanStayByWeekWriteHeaders(generateClear bool) {
 	if generateClear {
-		utils.WriteHeaders(stayByWeekMeanOutputCsv, "Week", "Mean Stay (Days)")
+		model.WriteHeaders(stayByWeekMeanOutputCsv, "Week", "Mean Stay (Days)")
 	}
-	utils.WriteHeaders(stayByWeekMeanOutputCsvDp, "Week", "Mean Stay (Days) (DP)")
+	model.WriteHeaders(stayByWeekMeanOutputCsvDp, "Week", "Mean Stay (Days) (DP)")
 }

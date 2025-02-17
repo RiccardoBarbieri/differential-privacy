@@ -71,3 +71,23 @@ func CountTestResultsDp(scope beam.Scope, col beam.PCollection, budget healthcar
 	})
 	return pTestResultsCount
 }
+
+func CountColumn(scope beam.Scope, col beam.PCollection, column string, budget healthcaredp.DpBudget) beam.PCollection {
+	operation := "count" + column
+	scope = scope.Scope(operation)
+	pCol := pbeam.MakePrivateFromStruct(scope, col, budget.PrivacySpec, "Id")
+
+	pColumnValues := pbeam.ParDo(scope, func(struc model.ValuesStruct) string {
+		return struc.Values[column]
+	}, pCol)
+	pColumnValuesCount := pbeam.Count(scope, pColumnValues, pbeam.CountParams{
+		PartitionSelectionParams: pbeam.PartitionSelectionParams{
+			Epsilon: budget.GetBudgetShare(operation).PartitionEpsilon,
+			Delta:   budget.GetBudgetShare(operation).PartitionDelta,
+		},
+		AggregationEpsilon:       budget.GetBudgetShare(operation).AggregationEpsilon,
+		MaxPartitionsContributed: 3,
+		MaxValue:                 24,
+	})
+	return pColumnValuesCount
+}

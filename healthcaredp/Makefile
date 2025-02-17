@@ -62,6 +62,7 @@ install: build
 	@cp $(BUILD_DIR)/$(BINARY_NAME) $(HOME)/$(INSTALL_DIR)
 	@echo "Setting up bash completion..."
 	@$(BUILD_DIR)/$(BINARY_NAME) completion bash > bash_autocomplete
+	@echo "bash_autocomplete generated"
 	@mkdir -p $(HOME)/$(COMPLETION_DIR)
 	@mv bash_autocomplete $(HOME)/$(COMPLETION_DIR)/$(COMPLETION_SCRIPT)
 

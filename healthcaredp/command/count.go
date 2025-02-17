@@ -3,6 +3,7 @@ package command
 import (
 	"github.com/spf13/cobra"
 	"healthcaredp"
+	"healthcaredp/model"
 	"healthcaredp/runs"
 )
 
@@ -12,7 +13,7 @@ var CountCmd = &cobra.Command{
 	RunE:              runs.RunCounts,
 	Args:              cobra.ExactArgs(1),
 	ValidArgsFunction: checkCountArg,
-	PreRun:            healthcaredp.InitEnvironment,
+	PreRunE:           model.InitEnvironment,
 }
 
 func init() {
