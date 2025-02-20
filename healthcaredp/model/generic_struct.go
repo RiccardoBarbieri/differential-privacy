@@ -28,7 +28,7 @@ func CompileTypesMap(types []TypeType) (map[string]string, error) {
 	return typesMap, nil
 }
 
-func formatValue(valueStr string, typeStr string) (any, error) {
+func FormatValue(valueStr string, typeStr string) (any, error) {
 	switch typeStr {
 	case "int":
 		return strconv.Atoi(valueStr)
@@ -61,20 +61,11 @@ func CreateGenericStruct(line string, emit func(struc ValuesStruct)) error {
 		return err
 	}
 	if len(cols) != len(Headers) {
-		return fmt.Errorf("line containse %d columns, struct expects %d columns - %s", len(cols), len(Headers), line)
+		return fmt.Errorf("line contains %d columns, struct expects %d columns - line: %s", len(cols), len(Headers), line)
 	}
 	baseStruct := ValuesStruct{}
 	baseStruct.Values = make(map[string]string)
 	for i, col := range cols {
-		//if typ, ok := TypesMap[Headers[i]]; ok {
-		//	value, err := formatValue(col, typ)
-		//	if err != nil {
-		//		return err
-		//	}
-		//	baseStruct.Values[Headers[i]] = value
-		//} else {
-		//	baseStruct.Values[Headers[i]] = col
-		//}
 		baseStruct.Values[Headers[i]] = col
 		baseStruct.Id = cols[IdFieldIndex]
 	}

@@ -54,7 +54,7 @@ func CreateAdmissionFn(line string, emit func(admission Admission)) error {
 		return err
 	}
 	if len(cols) != AdmissionColNumber {
-		return fmt.Errorf("line containse %d columns, Admissions expects %d columns - %s", len(cols), AdmissionColNumber, line)
+		return fmt.Errorf("line contains %d columns, Admissions expects %d columns - %s", len(cols), AdmissionColNumber, line)
 	}
 	admission.Name = cols[0]
 	admission.Age, err = strconv.Atoi(cols[1])
