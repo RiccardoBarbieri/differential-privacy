@@ -2,7 +2,6 @@ package healthcaredp
 
 import (
 	"fmt"
-	log "github.com/golang/glog"
 	"github.com/google/differential-privacy/privacy-on-beam/v3/pbeam"
 	"healthcaredp/model"
 	"healthcaredp/utils"
@@ -23,6 +22,9 @@ type DpBudget struct {
 	Epsilon      float64
 }
 
+const GAUSSIAN = "gauss"
+const LAPLACIAN = "laplace"
+
 var SupportedOperations []string
 
 var Budget DpBudget
@@ -38,60 +40,87 @@ var MeanOperations = []string{"MeanStayByWeek"}
 
 func init() {
 
-	pSpecParams := pbeam.PrivacySpecParams{
-		AggregationEpsilon:        AggregationEpsilon,
-		PartitionSelectionEpsilon: PartitionEpsilon,
-		PartitionSelectionDelta:   Delta,
-	}
-
 	SupportedOperations = append(SupportedOperations, CountOperations...)
 	SupportedOperations = append(SupportedOperations, MeanOperations...)
-
-	var err error
-	Budget.Delta = Delta
-	Budget.Epsilon = Epsilon
-	Budget.PrivacySpec, err = pbeam.NewPrivacySpec(pSpecParams)
-	Budget.BudgetShares = make(map[string]DpBudgetShare)
-	if err != nil {
-		log.Fatalf("Failed to create privacy spec: %v", err)
-	}
 }
 
-func (db DpBudget) InitYamlBudgetShares(config *model.YamlConfig) (err error) {
-
+func (db *DpBudget) InitYamlBudgetShares(config *model.YamlConfig) (err error) {
 	var delta = config.PipelineDp.PrivacyBudget.Delta
 	var epsilon = config.PipelineDp.PrivacyBudget.Epsilon
 
-	pSpecParams := pbeam.PrivacySpecParams{
-		AggregationEpsilon:        epsilon * config.PipelineDp.PrivacyBudget.AggregationShare,
-		PartitionSelectionEpsilon: epsilon - epsilon*config.PipelineDp.PrivacyBudget.AggregationShare,
-		PartitionSelectionDelta:   delta,
+	var aggregationEpsilon = epsilon * config.PipelineDp.PrivacyBudget.AggregationShare
+
+	var aggregationDelta = 0.0
+	var partitionSelectionDelta = 0.0
+	if config.PipelineDp.PrivacyBudget.NoiseKind == GAUSSIAN {
+		aggregationDelta = delta * config.PipelineDp.PrivacyBudget.AggregationShare
+		partitionSelectionDelta = delta - aggregationDelta
+	} else if config.PipelineDp.PrivacyBudget.NoiseKind == LAPLACIAN {
+		partitionSelectionDelta = delta
+	}
+	var partitionSelectionEpsilon = epsilon - aggregationEpsilon
+
+	var pSpecParams = pbeam.PrivacySpecParams{}
+	if config.PipelineDp.PrivacyBudget.NoiseKind == GAUSSIAN {
+		pSpecParams = pbeam.PrivacySpecParams{
+			AggregationEpsilon:        aggregationEpsilon,
+			AggregationDelta:          aggregationDelta,
+			PartitionSelectionEpsilon: partitionSelectionEpsilon,
+			PartitionSelectionDelta:   partitionSelectionDelta,
+		}
+	} else if config.PipelineDp.PrivacyBudget.NoiseKind == LAPLACIAN {
+		pSpecParams = pbeam.PrivacySpecParams{
+			AggregationEpsilon:        aggregationEpsilon,
+			PartitionSelectionEpsilon: partitionSelectionEpsilon,
+			PartitionSelectionDelta:   delta,
+		}
 	}
 
-	Budget.Delta = config.PipelineDp.PrivacyBudget.Delta
-	Budget.Epsilon = config.PipelineDp.PrivacyBudget.Epsilon
-	Budget.PrivacySpec, err = pbeam.NewPrivacySpec(pSpecParams)
+	db.Delta = delta
+	db.Epsilon = epsilon
+	db.PrivacySpec, err = pbeam.NewPrivacySpec(pSpecParams)
 	if err != nil {
 		return err
 	}
-	Budget.BudgetShares = make(map[string]DpBudgetShare)
+	db.BudgetShares = make(map[string]DpBudgetShare)
 
 	totalImportance := 0.0
 	for _, op := range config.PipelineDp.Operations {
 		totalImportance += op.Importance
 	}
 	for _, op := range config.PipelineDp.Operations {
-		db.BudgetShares[op.OperationName] = DpBudgetShare{
-			AggregationEpsilon: (op.Importance / totalImportance) * AggregationEpsilon,
-			PartitionEpsilon:   (op.Importance / totalImportance) * PartitionEpsilon,
-			AggregationDelta:   (op.Importance / totalImportance) * Delta,
-			PartitionDelta:     Delta - (op.Importance/totalImportance)*Delta,
+		if config.PipelineDp.PrivacyBudget.NoiseKind == GAUSSIAN {
+			db.BudgetShares[op.OperationName] = DpBudgetShare{
+				AggregationEpsilon: (op.Importance / totalImportance) * aggregationEpsilon,
+				PartitionEpsilon:   (op.Importance / totalImportance) * partitionSelectionEpsilon,
+				AggregationDelta:   (op.Importance / totalImportance) * aggregationDelta,
+				PartitionDelta:     (op.Importance / totalImportance) * partitionSelectionDelta,
+			}
+		} else if config.PipelineDp.PrivacyBudget.NoiseKind == LAPLACIAN {
+			db.BudgetShares[op.OperationName] = DpBudgetShare{
+				AggregationEpsilon: (op.Importance / totalImportance) * aggregationEpsilon,
+				PartitionEpsilon:   (op.Importance / totalImportance) * partitionSelectionEpsilon,
+				PartitionDelta:     (op.Importance / totalImportance) * delta,
+			}
 		}
 	}
 	return nil
 }
 
 func (db DpBudget) InitAllBudgetShares(importance map[string]float64) (err error) {
+	pSpecParams := pbeam.PrivacySpecParams{
+		AggregationEpsilon:        AggregationEpsilon,
+		PartitionSelectionEpsilon: PartitionEpsilon,
+		PartitionSelectionDelta:   Delta,
+	}
+	db.Delta = Delta
+	db.Epsilon = Epsilon
+	db.PrivacySpec, err = pbeam.NewPrivacySpec(pSpecParams)
+	db.BudgetShares = make(map[string]DpBudgetShare)
+	if err != nil {
+		return fmt.Errorf("failed to create privacy spec: %v", err)
+	}
+
 	if len(importance) != len(SupportedOperations) {
 		return fmt.Errorf("expected %d importance values, got %d", len(SupportedOperations), len(importance))
 	}
@@ -116,6 +145,19 @@ func (db DpBudget) InitAllBudgetShares(importance map[string]float64) (err error
 }
 
 func (db DpBudget) InitBudgetShares(importance map[string]float64) (err error) {
+	pSpecParams := pbeam.PrivacySpecParams{
+		AggregationEpsilon:        AggregationEpsilon,
+		PartitionSelectionEpsilon: PartitionEpsilon,
+		PartitionSelectionDelta:   Delta,
+	}
+	db.Delta = Delta
+	db.Epsilon = Epsilon
+	db.PrivacySpec, err = pbeam.NewPrivacySpec(pSpecParams)
+	db.BudgetShares = make(map[string]DpBudgetShare)
+	if err != nil {
+		return fmt.Errorf("failed to create privacy spec: %v", err)
+	}
+
 	if len(importance) > len(SupportedOperations) {
 		return fmt.Errorf("importance map has more than %d operations", len(SupportedOperations))
 	}
