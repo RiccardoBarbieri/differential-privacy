@@ -7,8 +7,10 @@ GOPATH ?= $(shell go env GOPATH)
 SHELL := /bin/bash
 
 # Define the output binary
-BINARY_NAME = healthcaredp
+BINARY_NAME = godp
 BUILD_DIR = main/build
+
+LOG_DIR = /var/log/$(BINARY_NAME)
 
 ifdef INSTALL_DIR
 INSTALL_DIR = $(INSTALL_DIR)
@@ -17,7 +19,7 @@ INSTALL_DIR = .local/bin
 endif
 
 COMPLETION_DIR = .local/share/bash-completion/completions
-COMPLETION_SCRIPT = healthcaredp
+COMPLETION_SCRIPT = godp
 
 all: check-env build
 

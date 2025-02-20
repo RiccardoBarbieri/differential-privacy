@@ -5,11 +5,11 @@ import (
 )
 
 var RootCmd = &cobra.Command{
-	Version: "0.1.0",
-	Use:     "healthcaredp",
+	Version: "1.0.0",
+	Use:     "godp",
 	Short:   "A pipeline to anonymize healthcare data using differential privacy techniques with privacy-on-beam",
 	Args:    cobra.NoArgs,
-	Example: "healthcaredp all --input-csv input.csv --output-csv output.csv --output-clean output_clean.csv",
+	Example: "godp all --input-csv input.csv --output-csv output.csv --output-clean output_clean.csv",
 }
 
 func init() {
