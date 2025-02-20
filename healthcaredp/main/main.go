@@ -1,15 +1,38 @@
 package main
 
 import (
-	"fmt"
+	"github.com/golang/glog"
+	"io"
+	"log"
+	"os"
+
 	"healthcaredp/command"
 )
 
 func main() {
-	var err error
+	//file, err := os.OpenFile("/var/log/"+command.RootCmd.Name()+"/"+command.RootCmd.Name()+".log", os.O_CREATE, 0644)
+	//if err != nil {
+	//	log.Fatalf("Error opening log file: %v", err)
+	//}
+	//defer func() {
+	//	err := file.Close()
+	//	if err != nil {
+	//		return
+	//	}
+	//}()
 
-	err = command.RootCmd.Execute()
+	log.SetOutput(io.Discard)
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	//log.SetOutput(file)
+
+	//flag.Set("logtostderr", "true")
+	//flag.Set("stderrthreshold", "INFO")
+
+	err := command.RootCmd.Execute()
 	if err != nil {
-		_ = fmt.Errorf("error executing command: %v", err)
+		glog.Errorf("error executing command: %v", err)
+		os.Exit(1)
 	}
+
+	glog.Flush()
 }
