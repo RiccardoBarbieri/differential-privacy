@@ -6,29 +6,71 @@ pipelinedp:
     id_field: "Name"
 
   privacy_budget:
+    noise_kind: "laplace"
     delta: 1e-5
-    epsilon: 0.47712125472
+    epsilon: 1
     aggregation_share: 0.5
-
   types:
-#    - column: "Name"
-#      type: string
-#    - column: "Test Results"
-#      type: string
-    - column: "Date of Admission"
+    - column: "Age"
+      type: int
+    - column: "DateOfAdmission"
       type: date
+    - column: "BillingAmount"
+      type: float
 
   operations:
     - name: CountTestResults
       type: count
-      column: Test Results
-      generate_non_dp: true
+      column: "TestResults"
       importance: 1
+      privacy_params:
+        max_contributions: 5
+        max_categories_contributed: 25
     - name: CountConditions
       type: count
-      column: Conditions
-      generate_non_dp: true
+      column: "MedicalCondition"
       importance: 2
+      privacy_params:
+        max_contributions: 15
+        max_categories_contributed: 6
+    - name: MeanAgeByCondition
+      type: mean_per_key
+      column: "Age"
+      key_column: "MedicalCondition"
+      importance: 3
+      privacy_params:
+        # max number of categories (medcond) that a given pID (name) can contribute to
+        max_categories_contributed: 6
+        # max number of times that a given pID (name) can influence a category (medcond)
+        max_contributions_per_category: 8
+        # clamp to these values, ages lower than min and higher than max are clamped
+        min_value: 5
+        max_value: 95
+    - name: SumExpenseByCondition
+      type: sum_per_key
+      column: "BillingAmount"
+      key_column: "MedicalCondition"
+      importance: 3
+      privacy_params:
+        # max number of categories (medcond) that a given pID (name) can contribute to
+        max_categories_contributed: 6
+        # clamp to these values, ages lower than min and higher than max are clamped
+        min_value: 0
+        max_value: 60000
+    - name: MeanBillByCondition
+      type: mean_per_key
+      column: "BillingAmount"
+      key_column: "MedicalCondition"
+      importance: 3
+      privacy_params:
+        # max number of categories (medcond) that a given pID (name) can contribute to
+        max_categories_contributed: 6
+        # max number of times that a given pID (name) can influence a category (medcond)
+        max_contributions_per_category: 8
+        # clamp to these values, ages lower than min and higher than max are clamped
+        min_value: 0
+        max_value: 100000
+
 
 
 
