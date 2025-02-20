@@ -17,6 +17,11 @@ with open('data/healthcare_cleaned.csv') as f:
     admissions = [datetime.strptime(i[5], date_fmt) for i in lines_split]
     discharges = [datetime.strptime(i[12], date_fmt) for i in lines_split]
 
+    ages = [int(i[1]) for i in lines_split]
+
+    billing_amounts = [float(i[9]) for i in lines_split]
+
+
 # Privacy Key -> Name
 
 # Counts the number of times that the privacy key appears in the dataset
@@ -87,10 +92,8 @@ for name, admission in zip(names, admissions):
 admission_week_tuples = [(k, len(v)) for k, v in admission_week_map.items()]
 admission_week_tuples.sort(key=lambda x: x[1], reverse=True)
 
-week_admission_tuples = [(k, v) for k, v in week_admission_map.items()]
+week_admission_tuples = [(k, len(v)) for k, v in week_admission_map.items()]
 week_admission_tuples.sort(key=lambda x: x[1], reverse=True)
-
-
 
 print(f"Mean Parameters: MeanStayByWeek")
 print(f"\tMaxValue = {names_count_tuples[0][1]}")
@@ -98,6 +101,44 @@ print(f"\tMaxValue = {names_count_tuples[0][1]}")
 print(f"\tMaxPartitionsContributed = {admission_week_tuples[0][1]}")
 # Maximum number of privacy keys that contribute to a single week of year
 print(f"\tMaxContributionsPerPartition = {week_admission_tuples[0][1]}")
+
+condition_names_map = {}
+for name, condition in zip(names, conditions):
+    if condition in condition_names_map:
+        if name in condition_names_map[condition]:
+            condition_names_map[condition][name] += 1
+        else:
+            condition_names_map[condition][name] = 1
+    else:
+        condition_names_map[condition] = {}
+
+for condition, names_map in condition_names_map.items():
+    condition_names_map[condition] = [(k, v) for k, v in names_map.items()]
+    condition_names_map[condition].sort(key=lambda x: x[1], reverse=True)
+
+highest_name_count_tuples = [names_tuples[0] for cond, names_tuples in condition_names_map.items()]
+highest_name_count_tuples.sort(key=lambda x: x[1], reverse=True)
+
+print(f"Mean Parameters: MeanAgeByCondition")
+# Max number of categories (condition) that a single privacy key (name) contributes to
+print(f"\tMaxPartitionsContributed = {conditions_count_tuples[0][1]}")
+# Max number of privacy keys (name) that contribute to a single category (condition)
+print(f"\tMaxContributionsPerPartition = {highest_name_count_tuples[0][1]}")
+# Min value on mean column
+print(f"\tMinValue = {min(ages)}")
+# Max value on mean column
+print(f"\tMaxValue = {max(ages)}")
+
+
+
+print(f"Sum Parameters: SumExpenseByCondition")
+# Max number of categories (condition) that a single privacy key (name) contributes to
+print(f"\tMaxPartitionsContributed = {conditions_count_tuples[0][1]}")
+# Min value on sum column
+print(f"\tMinValue = {min(billing_amounts)}")
+# Max value on sum column
+print(f"\tMaxValue = {max(billing_amounts)}")
+
 
 
 
