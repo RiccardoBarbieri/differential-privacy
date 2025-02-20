@@ -89,7 +89,7 @@ func formatStructCsvFn(s interface{}) string {
 func formatType(t reflect.Value) string {
 	switch t.Kind() {
 	case reflect.String:
-		return "\"" + t.String() + "\""
+		return t.String()
 	case reflect.Bool:
 		return strconv.FormatBool(t.Bool())
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
