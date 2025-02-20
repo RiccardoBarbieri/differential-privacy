@@ -46,7 +46,6 @@ func WriteOutput(scope beam.Scope, col beam.PCollection, fileName string) {
 	scope = scope.Scope("WriteOutput")
 	if typex.IsKV(col.Type()) {
 		textio.Write(scope, fileName, beam.ParDo(scope, formatKVCsvFn, col))
-
 	} else if col.Type().Type() == reflect.TypeOf(Admission{}) {
 		textio.Write(scope, fileName, beam.ParDo(scope, formatStructCsvFn, col))
 	} else {
@@ -109,7 +108,7 @@ func WriteHeaders(fileName string, headers ...string) {
 func closeFile(file *os.File) {
 	err := file.Close()
 	if err != nil {
-		log.Infof("Error closing file: %v", err)
+		log.Warningf("Error closing file: %v", err)
 	}
 }
 
@@ -174,6 +173,7 @@ func RemoveHeadersAndSaveCsv(filename string) (newFilename string, err error) {
 	}
 
 	newFilename = insertSuffixFilename(filename, "csv", "_noheader")
+	_ = os.Remove(newFilename)
 	newFile, err := os.OpenFile(newFilename, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return "", err
@@ -231,7 +231,7 @@ func GetHeaders(filename string) ([]string, error) {
 	}
 	var cleanCols []string
 	for _, col := range cols {
-		cleanCols = append(cleanCols, strings.ReplaceAll(col, " ", ""))
+		cleanCols = append(cleanCols, col)
 	}
 	return cleanCols, nil
 }
