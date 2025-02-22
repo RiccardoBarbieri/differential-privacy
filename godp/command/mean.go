@@ -3,7 +3,6 @@ package command
 import (
 	"github.com/spf13/cobra"
 	"healthcaredp"
-	"healthcaredp/model"
 	"healthcaredp/runs"
 )
 
@@ -13,7 +12,7 @@ var MeanCmd = &cobra.Command{
 	RunE:              runs.RunMeans,
 	Args:              cobra.ExactArgs(1),
 	ValidArgsFunction: checkMeanArg,
-	PreRunE:           model.InitEnvironment,
+	PreRunE:           healthcaredp.InitEnvironment,
 }
 
 func init() {

@@ -1,9 +1,10 @@
-package model
+package utils
 
 import (
 	"github.com/apache/beam/sdks/v2/go/pkg/beam"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
+	"healthcaredp/model"
 	"strings"
 )
 
@@ -33,7 +34,7 @@ func capitalizeWords(s string) string {
 	return strings.Join(words, " ")
 }
 
-func cleanAdmissionName(admission Admission) Admission {
+func cleanAdmissionName(admission model.Admission) model.Admission {
 	titleName := capitalizeWords(admission.Name)
 	admission.Name = titleName
 	return admission
