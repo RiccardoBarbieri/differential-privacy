@@ -12,3 +12,34 @@ Si definisca $x \in \mathbb{N}^k$ e $y \in \mathbb{N}^k$ tali che $||x - y||_1 \
     &\le e^\varepsilon
 \end{align*}
 \end{proof}
+
+\begin{proof}[\ref{plot:normalized_inv_plrv}]
+\label{proof:plrv_gaussian}
+Si consideri un meccanismo $A$ e un parametro $\varepsilon \ge 0$, il minor parametro $\delta$ tale che il meccanismo $A$ è $(\varepsilon, \delta)$-DP è definito come:
+\begin{equation*}
+    \delta_S = \Pr[A(D_{in}) \in S] - e^\varepsilon \cdot \Pr[A(D_{out} \in S]
+\end{equation*}
+La definizione è soddisfatta se $\delta_S \le \delta$, quindi si definisce $\delta$:
+\begin{equation*}
+    \delta = \max_S(\Pr[A(D_{in}) \in S] - e^\varepsilon \cdot \Pr[A(D_{out} \in S])
+\end{equation*}
+Sono di interesse soltanto output $O$ tali che $\Pr[A(D_{in}) = O] > e^\varepsilon \cdot \Pr[A(D_{out}) = O]$, in quanto tutti gli altri output renderebbero $\delta_{max}$ più piccolo. L'insieme $S$ che minimizza questa quantità è:
+\begin{equation*}
+    S_{max} := \{O | \Pr[A(D_{in}) = O] > e^\varepsilon \cdot \Pr[A(D_{out}) = O]\}
+\end{equation*}
+Riscrivendo la definizione di $\delta$ precedente sostituendo con il nuovo insieme $S_{max}$ si ottiene:
+\begin{align*}
+    \delta &= \Pr[A(D_{in}) \in S_{max}] - e^\varepsilon \cdot \Pr[A(D_{out}) \in S_{max}]\\
+    &= \sum_{O \in S_{max}} (\Pr[A(D_{in}) = O] - e^\varepsilon \cdot \Pr[A(D_{out}) = O])\\
+    &= \sum_{O \in S_{max}} \Pr[A(D_{in}) = O]\left(1 - \frac{e^\varepsilon}{e^{\mathcal{L}_{D_{in},D_{out}}(O)}}\right)
+\end{align*}
+Invece di sommare soltanto gli output $O \in S_{max}$, possiamo riscrivere considerando tutti gli output $O \in S$ azzerando quelli che non appartengono a $S_{max}$.
+\begin{equation*}
+    \delta = \sum_O \Pr[A(D_{in}) = O] \max\left(0, 1 - \frac{e^\varepsilon}{e^{\mathcal{L}_{D_{in},D_{out}}(O)}}\right)
+\end{equation*}
+L'espressione sopra è un valore atteso pesato sulla probabilità che $A(D_{in}) = O$:
+\begin{equation*}
+\delta = \mathbb{E}_{O\sim A(D_{in})} \left[ \max\left(0, 1 - \frac{e^\varepsilon}{e^{\mathcal{L}_{D_{in},D_{out}}(O)}}\right)\right]
+\end{equation*}
+che corrisponde all'area tra la curva $e^{\mathcal{\varepsilon}}/e^{\mathcal{L}}$ e la retta $y = 1$.
+\end{proof}
