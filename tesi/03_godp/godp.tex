@@ -1,0 +1,130 @@
+\chapter{GoDP - Strumento CLI per la creazione di release DP}
+In questo capitolo si discuterà la creazione di un'applicazione per la generazione di distribuzioni di dati differenzialmente privati.
+
+L'applicazione sfrutta la libreria Privacy on Beam sviluppata da Google \cite{pbeampac91:online} e basata sul framework Apache Beam; la scelta di questa libreria è motivata dal fatto che Privacy on Beam è tra le implementazioni open source di algoritmi DP più diffuse e perché mette a disposizione una vasta gamma di primitive DP.
+
+Si è scelto di utilizzare un framework DP basato su Apache Beam per l'implementazione di \texttt{GoDP} per il repertorio di caratteristiche che garantiscono flessibilità per compiti di elaborazione dati.
+
+Tra queste caratteristiche figura l'unificazione del modello di programmazione tra batch processing e stream processing con apposite primitive per la definizione delle \textit{pipeline} di elaborazione dati, ammettendo una netta separazione tra business logic e modello di elaborazione dei dati.
+Un'altra caratteristica che rende questo framework ideale per un'applicazione di questo tipo è la portabilità delle implementazioni, questa caratteristica è ottenuta grazie alla possibilità di eseguire una pipeline su una varietà di \textit{runner} il che permette di distribuire un'applicazione in un qualsiasi ambiente che supporti l'implementazione di un runner, e.g. Direct Runner per testing e sviluppo, GC Dataflow Runner per GCP e Apache Flink Runner per altre piattaforme cloud. Questa caratteristica rende triviale la possibilità di migrare tra ambienti riducendo la possibilità di vendor lock-in per deployment su cloud.
+
+\section{Architettura}
+In questa sezione si documenterà l'architettura dell'applicazione \texttt{GoDP}, analizzando i componenti che la costituiscono e come questi interagiscono per generare distribuzioni di dati differenzialmente private.
+
+L'architettura dell'applicazione permette due approcci per definire le aggregazioni differenzialmente private da elaborare:
+\begin{itemize}
+    \item file di configurazione con apposito formato di definizione \texttt{DPYaml} con il quale si specificano le operazioni da compiere
+    \item definizione di funzioni personalizzate per la realizzazione di operazioni complesse
+\end{itemize}
+
+La seconda metodologia è necessaria in quanto potrebbero essere necessarie specifiche operazioni che il formato di definizione \texttt{DPYaml} non contempla; questo approccio offre un'interfaccia di utilizzo relativamente semplice per utenti inesperti, lasciando tuttavia spazio per l'estensione dell'applicazione per operazioni complesse a utenti che hanno confidenza con il framework e la privacy differenziale.
+
+\subsection{Panoramica componenti}
+\texttt{GoDP} è composto da 5 moduli principali:
+\begin{itemize}
+    \item \texttt{aggregations}
+    \item \texttt{commands}
+    \item \texttt{model}
+    \item \texttt{runs}
+    \item \texttt{yaml\_config}
+    \item \texttt{budget}
+\end{itemize}
+
+In aggiunta a questi moduli, l'applicazione fa uso di altri componenti minori: il componente \texttt{cleaning} contiene funzioni per pulire i dati del dataset in input, come ad esempio la capitalizzazione di stringhe per uniformare eventuali valori malformati; il componente \texttt{io}, in combinazione con \texttt{format}, mette a disposizione funzioni utili alla scrittura e formattazione dei dataset generati dalle pipeline di elaborazione dati sfruttando la riflessione per poter gestire una vasta gamma di tipi di dato. Questi moduli minori, in particolare \texttt{io}, espongono metodi che vengono utilizzati per caricare i dataset da elaborare che, nella versione più recente dell'applicazione, devono essere formattati come file CSV.
+
+Un altro componente integrale al funzionamento dell'applicazione è \texttt{global\_env}, questo componente dichiara funzioni e variabili globali utili alla condivisione di risorse come il riferimento alla pipeline e oggetti connessi all'elaborazione corrente, predispone inoltre la funzione centrale all'inizializzazione dei parametri globali dell'applicazione.
+Altre risorse sono state dichiarate come globali oltre a quelle in \texttt{global\_env}, questa strategia si è resa necessaria a causa di alcuni specifici dettagli implementativi del framework e del linguaggio utilizzato.
+
+\subsubsection{\texttt{aggregations}}
+Il modulo \texttt{aggregations} è il componente principale dell'applicazione, al suo interno sono contenute le implementazioni delle trasformazioni differenzialmente private che \texttt{GoDP} supporta. In questo modulo sono implementate sia le operazioni differenzialmente private \textit{generiche} sia quelle \textit{specializzate}; di seguito si discuterà la differenza tra le due.
+
+Per operazione specializzata si intende una trasformazione che non è possibile specificare tramite il formato di configurazione \texttt{DPYaml}; un esempio di operazione di questo tipo è una qualsiasi trasformazione che richiede di utilizzare valori composti o post-processati da campi del dataset.
+
+Per descrivere al meglio il funzionamento delle funzioni di elaborazione dati, è necessario introdurre alcuni concetti alla base di Apache Beam:
+\begin{itemize}
+    \item \texttt{Pipeline}: centro dell'operatività di Apache Beam, una pipeline è un grafo che contiene le operazioni definite dal programmatore;
+    \item \texttt{PCollection}: contiene i dati da processare nella pipeline, può essere un dataset finito oppure uno stream di dati che viene rifornito in modo continuo e
+    \item \texttt{Scope}: entità utilizzata per associare una operazione a una particolare pipeline, può essere usata per generare sotto-scope utili a raggruppare logicamente le trasformazioni.
+\end{itemize}
+
+Le funzioni che implementano le strategie di elaborazione DP condividono la stessa firma di chiamata, questa è composta da:
+\begin{itemize}
+    \item \texttt{scope} della pipeline, utilizzato per aggiungere le trasformazioni alla pipeline corrente;
+    \item \texttt{pcol beam.PCollection}, contiene i dati da elaborare;
+    \item \texttt{op model.OperationType}, incapsula i parametri dell'operazione da svolgere e
+    \item \texttt{bd godp.DpBudget}, struttura dati che contiene il budget DP della pipeline ed espone metodi per ottenere il budget per la specifica operazione.
+\end{itemize}
+
+Queste funzioni condividono anche i passi che compiono per registrare le aggregazioni nella pipeline:
+\begin{enumerate}
+    \item creazione di un sotto-scopo per da utilizzare per l'operazione
+    \item creazione di una \texttt{PrivatePCollection} (ppcol) a partire dalla \texttt{PCollection} che contiene i dati da elaborare
+    \item applicazione di una funzione a ogni elemento della \texttt{ppcol} per estrarre i dati di interesse, si genera una nuova \texttt{PrivatePCollection}
+    \item applicazione della trasformazione DP configurata con i parametri appropriati
+\end{enumerate}
+
+Le \texttt{PCollection} supportano l'applicazione di trasformazioni arbitrarie ai dati che contengono, tuttavia per applicare trasformazioni differenzialmente private a questa struttura dati è necessario trasformarla in una \texttt{PrivatePCollection}, una struttura dati esposta da Privacy on Beam che associa ogni elemento di una \texttt{PCollection} a un \textit{identificatore di privacy}. La scelta dell'identificatore determina le \textit{unità di privacy} che saranno sotto la garanzia di $(\varepsilon, \delta)$-DP, in particolare i risultati delle aggregazioni effettuate su una determinata \texttt{PrivatePCollection} saranno $(\varepsilon, \delta)$-indistinguibili dal risultato ottenuto dall'applicazione delle aggregazioni sulla stessa \texttt{PrivatePCollection} dalla quale sono stati rimossi tutti i record associati a un determinato identificatore.
+
+Per creare una \texttt{PrivatePCollection} Privacy on Beam espone metodi appositi da utilizzare in funzione del tipo di dato contenuto nella \texttt{PCollection}, quello utilizzato da questa applicazione è il metodo \texttt{pbeam.MakePrivateFromStruct} che accetta in input una \texttt{PCollection} di struct e il nome del campo dello struct che contiene l'identificatore di privacy. \texttt{GoDP} è stato progettato per poter accomodare dataset arbitrari, questo tuttavia si è rivelato un problema in fase di progettazione; inizialmente l'approccio utilizzato è stato quello di sfruttare la riflessione di Golang per creare a runtime un'entità struct dinamica che contenesse i campi presenti del dataset CSV, applicando questa metodologia Privacy on Beam è emerso che il framework non supporta tipi generici nella generazione di \texttt{PrivatePCollection} in quanto non implementa metodologie per serializzare tipi di dato generici.
+
+Per far fronte a questo problema si è scelto di utilizzare un particolare tipo \texttt{ValuesStruct} definito come segue:
+\begin{minted}[breaklines,bgcolor=lightgray,framesep=2mm,baselinestretch=1.2,fontsize=\footnotesize]{go}
+type ValuesStruct struct {
+	Values map[string]string
+	Id     string
+}
+\end{minted}
+Questa struttura dati è pensata per immagazzinare un record del dataset in una mappa che utilizza i nomi dei campi come chiavi nel membro \texttt{Values} e il valore dell'identificatore di privacy nel membro \texttt{Id}; questo approccio, combinato con la possibilità di definire funzioni anonime, permette di gestire un dataset arbitrario senza conoscerne i campi a priori.
+
+Questo approccio rende necessario l'inclusione di una sezione del formato di configurazione \texttt{DPYaml} dedicata a specificare, per i campi rilevanti, il tipo di dato contenuto nel dataset; questo dettaglio verrà discusso nella sezione dedicata al formato YAML.
+
+Una volta ottenuta la \texttt{PrivatePCollection} si applica una funzione che estrae i campi da aggregare a tutti i valori della raccolta di dati, creando una seconda \texttt{PrivatePCollection} che contiene un sottoinsieme del dataset e si passa come parametro della funzione di aggregazione DP appropriata. L'applicazione di questa funzione richiede l'utilizzo di specifici parametri DP; oltre ai parametri $\delta$ e $\varepsilon$ è necessario definire valori che sono propri del dataset da analizzare come ad esempio \texttt{MaxValue}, un valore che indica il valore massimo che un singolo soggetto può contribuire all'aggregazione considerata (\ref{sec:contribution_lim}); questi parametri di configurazione verranno discussi in dettaglio nella sezione su \texttt{DPYaml}.
+
+Si riporta di seguit
+
+\begin{minted}[breaklines,bgcolor=lightgray,framesep=2mm,baselinestretch=1.2,fontsize=\footnotesize]{go}
+func CountColumn(scope beam.Scope, col beam.PCollection, op model.OperationType, bd healthcaredp.DpBudget) (*beam.PCollection, error) {
+	scope = scope.Scope(op.OperationName)
+	pCol := pbeam.MakePrivateFromStruct(scope, col, bd.PrivacySpec, "Id")
+
+	pColumnValues := pbeam.ParDo(scope,
+		func(struc model.ValuesStruct) string {
+			return struc.Values[op.Column]
+		}, pCol)
+        pColumnValuesCount := pbeam.Count(scope, pColumnValues,
+            pbeam.CountParams{
+                PartitionSelectionParams: pbeam.PartitionSelectionParams{
+                    Epsilon: bd.GetBudgetShare(op.OperationName).PartitionEpsilon,
+                    Delta:   bd.GetBudgetShare(op.OperationName).PartitionDelta,
+                },
+                AggregationEpsilon: bd.GetBudgetShare(op.OperationName).AggregationEpsilon,
+                AggregationDelta: bd.GetBudgetShare(op.OperationName).AggregationDelta,
+                MaxPartitionsContributed: *op.PrivacyParams.MaxCategoriesContributed,
+                MaxValue: *op.PrivacyParams.MaxContributions,
+            })
+	return &pColumnValuesCount, nil
+}
+\end{minted}
+
+
+\subsubsection{\texttt{commands}}
+
+
+
+
+\subsubsection{\texttt{model}}
+
+
+
+
+\subsubsection{\texttt{runs}}
+
+
+
+
+\subsubsection{\texttt{yaml\_config}}
+
+
+
+
+\subsubsection{\texttt{budget}}

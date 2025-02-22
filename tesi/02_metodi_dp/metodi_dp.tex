@@ -77,7 +77,7 @@ Il parametro $\varepsilon$ presente nella definizione di $\varepsilon$-DP può e
 
 Prendendo come riferimento un attaccante che conosce l'intero database eccetto il soggetto target si può modellare il suo punto di vista considerando due possibili dataset: $D_{in}$ contiene il target mentre $D_{out}$ no; l'obiettivo dell'attaccante è capire quale dei due database è quello reale.
 
-Nel modello dell'attaccante si può esprimere il sospetto che il database $D$ sia $D_{in}$ come $\Pr[D = D_{in}] = 1 - \Pr[D = D_{out}]$. Si supponga ora che l'attaccante abbia osservato che il meccanismo DP applicato a $D$ restituisce l'output $O$: si può esprimere la probabilità che $D = D_{in}$ dopo aver osservato l'output come $\Pr[D = D_{in} | \mathcal{M}(D) = O]$; applicando il teorema di Bayes si ottiene un'espressione che permette di quantificare il livello di sospetto $Pr[D = Din|M(D) = O]$ che l'attaccante ha dopo aver osservato l'output $O$.
+Nel modello dell'attaccante si può esprimere il sospetto che il database $D$ sia $D_{in}$ come $\Pr[D = D_{in}] = 1 - \Pr[D = D_{out}]$. Si supponga ora che l'attaccante abbia osservato che il meccanismo DP applicato a $D$ restituisce l'output $O$: si può esprimere la probabilità che $D = D_{in}$ dopo aver osservato l'output come $\Pr[D = D_{in} | \mathcal{M}(D) = O]$; applicando il teorema di Bayes si ottiene un'espressione che permette di quantificare il livello di sospetto $Pr[D = D_{in}|M(D) = O]$ che l'attaccante ha dopo aver osservato l'output $O$.
 \begin{equation}
 \label{eq:bayes_susp}
     \Pr[D = D_{in} | \mathcal{M}(D) = O] = \frac{\Pr[D = D_{in}] \cdot \Pr[\mathcal{M}(D) = O | D = D_{in}]}{\Pr[\mathcal{M}(D) = O]}
@@ -150,19 +150,20 @@ La sensitività di una funzione è un valore che indica la magnitudine massima c
 
 La sensitività $\ell_1$ è definita come:
 \begin{equation}
+    \label{eq:sensitivity}
     \Delta f = \max_{\substack{x,y \in \mathbb{N}^{|\mathcal{X}|}\\||x - y||_1 = 1}} ||f(x) - f(y)||_1
 \end{equation}
 
 Utilizzando la sensitività della funzione in considerazione si calibra la scala (parametro $b$) della distribuzione di Laplace come $Lap(x|0,\Delta f/\varepsilon)$. Per la dimostrazione che l'utilizzo di questa distribuzione crea un meccanismo che rispetta $\varepsilon$-privacy differenziale consultare \ref{proof:laplace_mechanism}
 
-\subsection{Limitazione del contributo}
-Si supponga di avere a disposizione un dataset che raccoglie le lamentele poste dai clienti di un'azienda tramite un modulo di feedback e di voler creare un report sul numero di lamentele poste al giorno; si decide di applicare il meccanismo di Laplace per anonimizzare i risultati dell'analisi.
+\subsection{Meccanismo di Laplace e singole statistiche}
+Si supponga di avere a disposizione un dataset che raccoglie le lamentele poste dai clienti di un'azienda tramite un modulo di feedback e di voler creare un report sul numero di lamentele poste al giorno; si decide di applicare il meccanismo di Laplace che aggiunge rumore calibrato per anonimizzare i risultati dell'analisi.
 
 Il primo passo per creare un meccanismo di Laplace differenzialmente privato è calcolare la sensitività della funzione in considerazione. Dato che si tratta di un'operazione di conteggio, intuitivamente si può pensare che questo valore sia pari a 1; tuttavia è necessario considerare la \textit{contribuzione massima} che un singolo utente può apportare al conteggio per valutare correttamente casi in cui un individuo presenta più di una lamentela al giorno.
 
 Se si considerasse $\Delta f = 1$ e quindi un parametro di scala per la distribuzione di Laplace pari a $b = \frac{1}{\varepsilon}$ si otterrebbe un meccanismo $x\varepsilon$-differenzialmente privato, dove $x$ corrisponde alla massima contribuzione che un singolo individuo può apportare al dataset. Supponendo un dataset di 500 unità con un utente che ha posto 5 lamentele, utilizzando $\Delta f = 1$ si otterrebbero due distribuzioni di probabilità con rapporto massimo di $e^{5\varepsilon}$, violando quindi la definizione di privacy differenziale.
 
-Si riporta di seguito il grafico che mostra le due distribuzioni di probabilità e il loro rapporto.
+Si riporta di seguito il grafico che mostra le due distribuzioni di probabilità centrate sul numero di soggetti nei due database, uno con il soggetto con le 5 lamentele e l'altro senza, e il loro rapporto.
 \begin{figure}[H]
     \centering
     \includegraphics[scale=0.7]{plots/double_laplace_pdf.pdf}
@@ -171,12 +172,209 @@ Si riporta di seguito il grafico che mostra le due distribuzioni di probabilità
 
 Per rispettare i requisiti della privacy differenziale è necessario utilizzare la sensitività della funzione di conteggio tenendo conto della possibilità di avere multipli record legati a un singolo individuo.
 
-\subsubsection{Scelta dei limiti}
+\subsubsection{Limitazione del contributo}
+\label{sec:contribution_lim}
 Generalizzando, il problema ricade sulle caratteristiche del particolare dominio di applicazione; si rende quindi necessario l'intervento di un esperto del dominio allo scopo di definire un ragionevole limite massimo alla sensitività; in fase di analisi sarà necessario limitare il conteggio dei record relativi a un singolo individuo.
 
+\subsection{Meccanismo di Laplace e statistiche multiple}
+Nel caso in cui si vogliano rilasciare statistiche multiple su un dataset (e.g. istogrammi) è necessario considerare come viene applicato il rumore a ognuna delle statistiche o categorie calcolate per assicurarsi di non violare la definizione di privacy differenziale.
+
+Si distinguono due casistiche differenti: un caso è caratterizzato da utenti che possono influenzare al massimo una statistica, che è quindi in questo senso disgiunta dalle altre, e un caso dove gli utenti possono influenzare diverse statistiche.
+
+\subsubsection{Caso 1: statistiche disgiunte}
+Quando le statistiche multiple da includere nella distribuzione di dati sono disgiunte, è sufficiente aggiungere rumore estratto da una distribuzione di Laplace di scala $\frac{\Delta f}{\varepsilon}$ a ogni statistica calcolata. Un esempio di questa eventualità è la creazione di un istogramma che mostra la distribuzione di età in un dataset.
+
+\begin{figure}[H]
+    \begin{subfigure}[t]{.5\textwidth}
+        \centering
+        \includegraphics[width=.8\linewidth]{plots/age_histogram.pdf}
+        \caption{Distribuzione età soggetti}
+    \end{subfigure}
+    \begin{subfigure}[t]{.5\textwidth}
+        \centering
+        \includegraphics[width=.8\linewidth]{plots/age_histogram_negative.pdf}
+        \caption{Distribuzione differenzialmente privata}
+    \end{subfigure}
+\end{figure}
+
+Il grafico di sinistra rappresenta i dati senza nessuna strategia di anonimizzazione, si crea il secondo istogramma utilizzando un meccanismo di Laplace con scala $\frac{1}{\varepsilon}$ che aggiunge rumore a ogni categoria utilizzando lo stesso parametro di scala. Come si può notare dai due grafici, ci sono evidenti problemi con la categoria 80-89 in quanto risulta negativa, così come con le altre categorie perché presentano valori non interi; in questo caso l'applicazione del meccanismo di Laplace ha dato luogo a valori incongruenti.
+
+Per fare fronte a casi come questo in cui l'applicazione del meccanismo differenzialmente privato scelto porta i dati al di fuori del loro dominio (e.g. valori negativi per un conteggio, valori non interi) è lecito applicare funzioni di post-processing. 
+
+Considerando un meccanismo $\varepsilon$-differenzialmente privato $\mathcal{M} \colon \mathbb{N}^{|\mathcal{X}|} \to \mathbb{R}$ e un mapping casuale arbitrario $f \colon \mathbb{R} \to \mathbb{R}'$ allora $f \circ \mathcal{M} \colon \mathbb{N}^{|\mathcal{X}|} \to \mathbb{R}'$ è anch'esso $\varepsilon$-differenzialmente privato. Questo risultato è dimostrato formalmente in \cite{TCS-042}, tuttavia intuitivamente si può capire che una qualsiasi funzione di post-processing che applica una trasformazione ai dati non agisce sui dati del dataset originario, non può quindi aumentare la perdita di privacy che la privacy differenziale concede con il meccanismo utilizzato.
+
+Applicando all'esempio di prima gli opportuni arrotondamenti e rimpiazzando i valori negativi con 0 si ottiene nuovamente una distribuzione di dati $\varepsilon$-differenzialmente privata.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=.4\linewidth]{plots/age_histogram_negative_post_processed.pdf}
+    \caption{Distribuzione differenzialmente privata con post-processing applicato}
+\end{figure}
+
+\subsubsection{Caso 2: statistiche intersecanti}
+Se le diverse statistiche da rilasciare possono essere influenzate dallo stesso utente, dato un numero $C$ di statistiche sarà necessario calcolare la sensitività della funzione considerando quanto un singolo utente possa contribuire a tutte le statistiche, nel caso di conteggi o calcolo di medie sarà necessario considerare $\Delta f = C$ e un parametro di scala $b = C / \varepsilon$, in questo modo ogni statistica sarà $\varepsilon / C$-differenzialmente privata.
+
+Questa strategia porta a evidenziare il vero significato del parametro $\varepsilon$ come un valore che quantifica il \textbf{budget di privacy} assegnato a una particolare distribuzione di dati.
+
+Una soluzione più flessibile rispetto a quella di creare $C$ statistiche $\varepsilon / C$-DP è quella di suddividere il budget in parti diseguali $\varepsilon_1, \varepsilon_2, \dots, \varepsilon_C$ tale che $\sum_{i=1}^{C} \varepsilon_i = \varepsilon$. Se esistono statistiche che sono più sensibili al rumore o necessitano di essere più accurate, è possibile allocare una porzione di budget maggiore: questo risulterà nell'aggiunta di una quantità di rumore minore, tuttavia sarà necessario aggiungere più rumore alle altre statistiche.
+
+\section{\texorpdfstring{$(\varepsilon,\delta)$}{TEXT}-privacy differenziale}
+Si supponga di procedere con un sondaggio che pone domande ai soggetti senza un numero predefinito di possibili risposte e che può quindi dare vita a un numero di categorie non prestabilito.
+
+Questo tipo di raccolta di dati è intrinsecamente soggetto a distorsioni, imprecisioni e, in generale, rumore nei dati raccolti, come ad esempio risposte di soggetti che fraintendono la domanda, risposte intenzionalmente non valide o semplicemente risposte rare.
+
+Il problema che sorge in questi casi consiste nella possibilità di avere due database che differiscono per un solo soggetto, ma uno dei due perde una categoria rara.
+
+\begin{figure}[H]
+    \begin{subfigure}[t]{.5\textwidth}
+        \centering
+        \includegraphics[width=.8\linewidth]{plots/drink_histogram_no_matcha.pdf}
+        \caption{Distribuzione bevande database 1}
+    \end{subfigure}
+    \begin{subfigure}[t]{.5\textwidth}
+        \centering
+        \includegraphics[width=.8\linewidth]{plots/drink_histogram_yes_matcha.pdf}
+        \caption{Distribuzione bevande database 2}
+    \end{subfigure}
+\end{figure}
+
+Un attaccante che osserva questi risultati è in grado di capire con totale certezza quale dei due database contiene il soggetto di interesse: questo è un \textbf{evento distintivo}.
+
+Una possibile soluzione consiste nell'applicare una soglia minima: si aggiunge rumore a tutte le categorie che sono state generate dalla raccolta di dati per poi scartare quelle che ricadono sotto a questa soglia per evitare \textit{eventi distintivi} che possono infrangere la definizione di DP.
+
+Nell'esempio di prima si potrebbe scegliere una soglia conservativa pari a 2, ottenendo come risultato il seguente istogramma.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=.4\linewidth]{plots/drink_histogram_yes_matcha_threshold.pdf}
+    \caption{Distribuzione differenzialmente privata con soglia applicata (>= 2)}
+\end{figure}
+
+Questa soluzione non è perfetta, come si può vedere, la categoria rara "Matcha" viene rimossa dalla distribuzione di dati finale; la categoria "Cioccolata" tuttavia, pur ricadendo sotto la soglia nel dataset originario, è stata pubblicata in quanto l'aggiunta di rumore dal meccanismo DP risulta sopra la soglia, questo caso viola la definizione di $\varepsilon$-DP.
+
+\subsection{Definizione}
+Per poter modellare una versione di DP che sia in grado di comprendere release di dati più vicine a casi realistici è necessario introdurre una nuova definizione: $(\varepsilon, \delta)$-privacy differenziale, definizione che rilassa lo standard imposto dalla definizione di $(\varepsilon)$-DP introducendo il parametro $\boldsymbol{\delta}$. Questo termine può essere interpretato come la probabilità di pubblicare un evento distintivo.
+
+\begin{equation}
+    \Pr[\mathcal{M}(D_1) \in S] \le e^{\varepsilon} \cdot \Pr[\mathcal{M}(D_2) \in S] + \boldsymbol{\delta}
+    \label{eq:ed_differential_privacy}
+\end{equation}
+
+Nell'esempio di prima si fa utilizzo di un meccanismo $(\varepsilon, \delta)$-DP con rumore campionato da una distribuzione di Laplace con una soglia pari a 2. Per stabilire quale parametro $\delta$ è stato utilizzato si calcola la probabilità che una categoria con conteggio 1, quindi esistente, superi la soglia utilizzata all'aggiunta di rumore di Laplace.
+
+A questo scopo si fa uso della \textit{funzione di sopravvivenza} della variabile aleatoria da cui si campiona il rumore per il meccanismo; data una variabile aleatoria $X$ con funzione cumulativa di distribuzione $F(x)$, la funzione di sopravvivenza è definita come $S(x) = 1 - F(x) =  P[X > x]$.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=.6\linewidth]{plots/threshold_probability.pdf}
+    \caption{Parametro $\delta$ al variare della soglia}
+\end{figure}
+
+Dato che il parametro $\delta$ rappresenta la probabilità che un singolo utente ha di avere i propri dati esposti a seguito di una query al meccanismo DP, per questo viene spesso scelto $\delta \ll 1/n$ in quanto la probabilità che i dati di \textit{almeno un soggetto} vengano esposti è pari a $n\delta$: è necessario assicurarsi che questo valore sia abbastanza piccolo. Questa regola assume che i singoli eventi distintivi siano non correlati, spesso questo non è vero in realtà, ma è un'ottima approssimazione in pratica.
+Ad esempio, in un database con 1 milione di utenti basterebbe una soglia di 15 per ottenere un valore di $n\delta < 0.1$.
+
+\subsection{Perdita di privacy}
+
+Riprendendo la definizione di guadagno di informazione \ref{eq:bayes_susp_ratio} con un meccanismo $\mathcal{M}$ definito $\varepsilon$-DP si può definire la seguente quantità.
+
+\begin{equation}
+     \frac{\Pr[\mathcal{M}(D_{in}) = O]}{\Pr[\mathcal{M}(D_{out}) = O]} = \frac{\frac{\Pr[D = D_{in} | \mathcal{M}(D) = O]}{\Pr[D = D_{out} | \mathcal{M}(D) = O]}}{\frac{\Pr[D = D_{in}]}{\Pr[D = D_{out}]}}
+\end{equation}
+
+Combinando questa definizione bayesiana del guadagno di informazione dopo l'osservazione dell'output $O$ con la definizione \ref{eq:e_differential_privacy} che impone $\frac{\Pr[\mathcal{M}(D_{in}) = O]}{\Pr[\mathcal{M}(D_{out}) = O]} \le e^\varepsilon$ si ottiene:
+
+\begin{equation}
+    \mathcal{L}_{D_{in},D_{out}}(O) = \ln \left(\frac{\Pr[\mathcal{M}(D_{in}) = O]}{\Pr[\mathcal{M}(D_{out}) = O]}\right)
+\end{equation}
+
+Questa quantità è definita come \textit{variabile aleatoria della perdita di privacy} (PLRV) al variare di $O$ e rappresenta il vero valore effettivo che $\varepsilon$ assume per un dato output $O$.
+
+Prendendo un parametro $\varepsilon = \ln (3)$ e utilizzando una distribuzione di Laplace, si traccia il grafico di $e^{\mathcal{L}}$ ponendo sulle ascisse gli eventi a seconda della loro probabilità, evidenziando come la perdita di privacy non superi mai $e^\varepsilon$.
+
+Si includono nel grafico anche 3 possibili output arbitrari considerando un dataset di 1000 individui.
+
+\begin{figure}[H]
+    \begin{subfigure}[t]{.5\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{plots/laplace_plrv_two_dists.pdf}
+        \caption{Distribuzioni di Laplace per database $D_{in}$ e $D_{out}$}
+        \label{plot:plrv_two_dists}
+    \end{subfigure}
+    \begin{subfigure}[t]{.5\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{plots/laplace_e^plrv.pdf}
+        \caption{Quantità di perdita di privacy al variare della probabilità degli eventi}
+        \label{plot:e^prlv}
+    \end{subfigure}
+    \label{plot:plrv}
+\end{figure}
+
+Il grafico mostra chiaramente come la conoscenza di un possibile attaccante cambia a seconda di quale output viene osservato:
+\begin{itemize}
+    \item $\boldsymbol{O_1}$: è più probabile che questo output possa provenire da $D_{in}$ che $D_{out}$, di preciso esattamente 3 volte più probabile come mostrato nel grafico \ref{plot:e^prlv}.
+    \item $\boldsymbol{O_2}$: è equamente probabile che l'output possa provenire da $D_{in}$ o da $D_{out}$.
+    \item $\boldsymbol{O_3}$: è più probabile che l'output possa provenire dal database $D_{out}$, in questo caso la conoscenza dell'attaccante è divisa per 3 in quanto il vero database è $D_{in}$. 
+\end{itemize}
+
+Allo scopo di evidenziare e visualizzare il preciso significato del parametro $\delta$ nella definizione di $(\varepsilon, \delta)$-DP, si introduce un nuovo meccanismo DP che fa uso di rumore campionato da una \textit{distribuzione di Gauss}; in seguito si motiverà l'esistenza di tale meccanismo DP nel contesto del rilascio di multiple statistiche.
+
+Riprendendo l'esempio precedente ma utilizzando distribuzioni gaussiane come base del meccanismo si ottengono i due grafici seguenti:
+
+\begin{figure}[H]
+    \begin{subfigure}[t]{.5\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{plots/normal_plrv_two_dists.pdf}
+        \caption{Distribuzioni gaussiane per database $D_{in}$ e $D_{out}$}
+        \label{plot:norm_plrv_two_dists}
+    \end{subfigure}
+    \begin{subfigure}[t]{.5\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{plots/normal_e^plrv.pdf}
+        \caption{Quantità di perdita di privacy al variare della probabilità degli eventi}
+        \label{plot:norm_e^prlv}
+    \end{subfigure}
+    \label{plot:plrv}
+\end{figure}
+
+Come si può vedere dal grafico di destra, con rumore gaussiano non esiste un limite superiore alla possibile perdita di privacy; la probabilità che si verifichi un evento distintivo è la probabilità che l'output restituito abbia un valore $e^{\mathcal{L}(O)} > 3$ e in questo caso è $\delta_1 \approx 0.053$, quindi il meccanismo è $(\ln (3), \delta_1)$-DP.
+
+Pur essendo una caratterizzazione precisa del parametro $\delta$, questo metodo non dà il giusto peso agli eventi molto più significativi degli altri; alcuni eventi, quelli \textit{vicini} a $\delta_1$, hanno un effetto molto minore sulla perdita di privacy con un aumento esponenziale man mano che l'evento si avvicina a una probabilità cumulativa pari a 0.
+
+Per tenere conto di questa caratteristica degli eventi quasi distintivi si rielabora la curva della PLRV prendendone l'inverso per posizionare gli eventi con maggiore perdita di privacy vicino a $y = 0$, si normalizza poi la curva prendendo il rapporto $\frac{e^\varepsilon}{e^\mathcal{L}}$ per portare gli eventi non estremi vicino a $y = 1$.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=.7\linewidth]{plots/normal_inverse_normalized_plrv.pdf}
+    \caption{Inversa normalizzata della PLRV}
+    \label{plot:normalized_inv_plrv}
+\end{figure}
+
+Questa trasformazione della curva della PLRV identifica l'effettivo valore di $\delta$ come l'area sottesa tra la retta $y = 1$, ovvero il limite che separa eventi quasi distintivi da rilasci di dati che rispettano $\varepsilon$-DP, e la curva $e^{\mathcal{\varepsilon}}/e^{\mathcal{L}}$ evidenziata nel grafico.
+
+Per una dimostrazione che questa caratterizzazione identifica il valore di $\delta$ pesato sulla probabilità che $A(D_{in}) = O$ per ogni output $O$ consultare l'appendice \ref{proof:plrv_gaussian}.
+
+\subsection{Rumore gaussiano}
+
+Nella sezione precedente è stato utilizzato un meccanismo DP fondato sulla distribuzione normale per spiegare il significato del parametro $\delta$ nella definizione di $(\varepsilon, \delta)$-DP, di seguito si discuterà per quale motivo è desiderabile creare meccanismi di questo tipo anche se ricadono in una categoria di meccanismi DP con garanzie minori rispetto a quelle della $\varepsilon$-privacy differenziale.
+
+La distribuzione gaussiana ha proprietà convenienti, ad esempio può essere usata per modellare variabili aleatorie con distribuzione sconosciuta in quanto una somma di molte variabili aleatorie porta a una distribuzione normale (teorema del limite centrale); un altro vantaggio è la regola delle tre sigma \cite{Kazmier_2003} che afferma che una variabile aleatoria campionata da questa distribuzione sarà:
+\begin{itemize}
+    \item nell'intervallo $[-\sigma, \sigma]$ 68\% delle volte;
+    \item nell'intervallo $[-2\sigma, 2\sigma]$ 95\% delle volte;
+    \item nell'intervallo $[-3\sigma, 3\sigma]$ 99.7\% delle volte.
+\end{itemize}
+
+Confrontando questa distribuzione con la distribuzione di Laplace si nota che le code della funzione di distribuzione diminuiscono molto più velocemente nella prima; prendendo $1000000$ di campioni dalle due distribuzioni, questi ricadranno nell'intervallo $[-5\sigma, 5\sigma]$ neanche 1\% delle volte nella distribuzione di Laplace e il 99.99...\% (12 volte 9) delle volte in una distribuzione normale.
 
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=.5\linewidth]{plots/gauss_laplace_e_1.pdf}
+    \caption{Distribuzioni di Laplace e normale a confronto, $\varepsilon = 1, \delta = 10^{-5}$}
+    \label{plot:normalized_inv_plrv}
+\end{figure}
 
+Mentre la distribuzione di Laplace è ideale quando si vogliono rilasciare poche statistiche poiché garantisce $\varepsilon$-DP, la distribuzione normale risulta utile quando si vogliono rilasciare numeri elevati di statistiche in quanto, come si può vedere dal grafico, utilizzando una distribuzione normale è necessario aggiungere più rumore rispetto a una distribuzione di Laplace.
 
 
 
