@@ -8,7 +8,7 @@ require (
 	github.com/go-playground/universal-translator v0.18.1
 	github.com/go-playground/validator/v10 v10.25.0
 	github.com/goccy/go-yaml v1.15.23
-	github.com/golang/glog v1.2.2
+	github.com/golang/glog v1.2.4
 	github.com/google/differential-privacy/privacy-on-beam/v3 v3.0.0
 	github.com/ompluscator/dynamic-struct v1.4.0
 	github.com/spf13/cobra v1.8.1
