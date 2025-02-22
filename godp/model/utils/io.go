@@ -1,4 +1,4 @@
-package model
+package utils
 
 import (
 	"bufio"
@@ -9,6 +9,7 @@ import (
 	"github.com/apache/beam/sdks/v2/go/pkg/beam/io/textio"
 	"github.com/apache/beam/sdks/v2/go/pkg/beam/register"
 	log "github.com/golang/glog"
+	"healthcaredp/model"
 	"io"
 	"os"
 	"reflect"
@@ -17,8 +18,8 @@ import (
 
 func init() {
 	register.Function2x0[string, beam.V](printKVConsoleFn)
-	register.Function1x0[Admission](printAdmissionConsoleFn)
-	register.Function1x0[ValuesStruct](printInterfaceConsoleFn)
+	register.Function1x0[model.Admission](printAdmissionConsoleFn)
+	register.Function1x0[model.ValuesStruct](printInterfaceConsoleFn)
 	register.Function1x0[string](printStringConsoleFn)
 }
 
@@ -33,20 +34,20 @@ func LoadCleanDataset(scope beam.Scope, fileName string) beam.PCollection {
 func ReadInput(scope beam.Scope, fileName string) beam.PCollection {
 	scope = scope.Scope("readInput")
 	lines := textio.Read(scope, fileName)
-	return beam.ParDo(scope, CreateAdmissionFn, lines)
+	return beam.ParDo(scope, model.CreateAdmissionFn, lines)
 }
 
 func ReadGenericInput(scope beam.Scope, fileName string) beam.PCollection {
 	scope = scope.Scope("readGenericInput")
 	lines := textio.Read(scope, fileName)
-	return beam.ParDo(scope, CreateGenericStruct, lines)
+	return beam.ParDo(scope, model.CreateGenericStruct, lines)
 }
 
 func WriteOutput(scope beam.Scope, col beam.PCollection, fileName string) {
 	scope = scope.Scope("WriteOutput")
 	if typex.IsKV(col.Type()) {
 		textio.Write(scope, fileName, beam.ParDo(scope, formatKVCsvFn, col))
-	} else if col.Type().Type() == reflect.TypeOf(Admission{}) {
+	} else if col.Type().Type() == reflect.TypeOf(model.Admission{}) {
 		textio.Write(scope, fileName, beam.ParDo(scope, formatStructCsvFn, col))
 	} else {
 		panic("unsupported output type: " + fmt.Sprintf("%T", col.Type()) + " filename: " + fileName)
@@ -120,9 +121,9 @@ func PrintConsole(scope beam.Scope, col beam.PCollection) {
 		beam.ParDo0(scope, printKVConsoleFn, col)
 	} else if col.Type().Type() == reflect.TypeOf("") {
 		beam.ParDo0(scope, printStringConsoleFn, col)
-	} else if col.Type().Type() == reflect.TypeOf(Admission{}) {
+	} else if col.Type().Type() == reflect.TypeOf(model.Admission{}) {
 		beam.ParDo0(scope, printAdmissionConsoleFn, col)
-	} else if col.Type().Type() == reflect.TypeOf(ValuesStruct{}) {
+	} else if col.Type().Type() == reflect.TypeOf(model.ValuesStruct{}) {
 		beam.ParDo0(scope, printInterfaceConsoleFn, col)
 	}
 }
@@ -133,11 +134,11 @@ func printKVConsoleFn(k string, v beam.V) {
 }
 
 // printAdmissionConsoleFn is a DoFn that prints Admission objects to the console and returns the printed value.
-func printAdmissionConsoleFn(admission Admission) {
+func printAdmissionConsoleFn(admission model.Admission) {
 	fmt.Printf("%s\n", admission)
 }
 
-func printInterfaceConsoleFn(baseStruct ValuesStruct) {
+func printInterfaceConsoleFn(baseStruct model.ValuesStruct) {
 	//fmt.Printf("%s\n", reflect.TypeOf(baseStruct.values["DateofAdmission"]))
 	fmt.Printf("%v\n", baseStruct)
 }

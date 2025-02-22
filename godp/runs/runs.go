@@ -9,6 +9,7 @@ import (
 	"healthcaredp"
 	"healthcaredp/aggregations"
 	"healthcaredp/model"
+	utils2 "healthcaredp/model/utils"
 	"healthcaredp/utils"
 	"strings"
 )
@@ -25,28 +26,28 @@ func RunAll(cmd *cobra.Command, args []string) (err error) {
 		return err
 	}
 
-	RunConditionsCount(model.GlobalScope,
-		model.CurrentIOArgs.OutputCsv,
-		model.CurrentIOArgs.GenerateNonDp,
-		model.AdmissionsCleaned)
-	RunTestResultsCount(model.GlobalScope,
-		model.CurrentIOArgs.OutputCsv,
-		model.CurrentIOArgs.GenerateNonDp,
-		model.AdmissionsCleaned)
+	RunConditionsCount(healthcaredp.GlobalScope,
+		healthcaredp.CurrentIOArgs.OutputCsv,
+		healthcaredp.CurrentIOArgs.GenerateNonDp,
+		healthcaredp.AdmissionsCleaned)
+	RunTestResultsCount(healthcaredp.GlobalScope,
+		healthcaredp.CurrentIOArgs.OutputCsv,
+		healthcaredp.CurrentIOArgs.GenerateNonDp,
+		healthcaredp.AdmissionsCleaned)
 
 	// Execute pipeline.
-	_, err = direct.Execute(context.Background(), model.GlobalPipeline)
+	_, err = direct.Execute(context.Background(), healthcaredp.GlobalPipeline)
 	if err != nil {
 		return fmt.Errorf("error executing pipeline: %v", err)
 	}
 
-	headers, err := model.StructCsvHeaders(model.Admission{})
+	headers, err := utils2.StructCsvHeaders(model.Admission{})
 	if err != nil {
 		return fmt.Errorf("error getting headers: %v", err)
 	}
-	model.WriteHeaders(model.CurrentIOArgs.OutputClean, headers...)
-	ConditionsCountWriteHeaders(model.CurrentIOArgs.GenerateNonDp)
-	TestResultsCountWriteHeaders(model.CurrentIOArgs.GenerateNonDp)
+	utils2.WriteHeaders(healthcaredp.CurrentIOArgs.OutputClean, headers...)
+	ConditionsCountWriteHeaders(healthcaredp.CurrentIOArgs.GenerateNonDp)
+	TestResultsCountWriteHeaders(healthcaredp.CurrentIOArgs.GenerateNonDp)
 
 	return nil
 }
@@ -64,33 +65,33 @@ func RunCounts(cmd *cobra.Command, args []string) (err error) {
 
 	switch args[0] {
 	case "CountConditions":
-		RunConditionsCount(model.GlobalScope,
-			model.CurrentIOArgs.OutputCsv,
-			model.CurrentIOArgs.GenerateNonDp,
-			model.AdmissionsCleaned)
+		RunConditionsCount(healthcaredp.GlobalScope,
+			healthcaredp.CurrentIOArgs.OutputCsv,
+			healthcaredp.CurrentIOArgs.GenerateNonDp,
+			healthcaredp.AdmissionsCleaned)
 	case "CountTestResults":
-		RunTestResultsCount(model.GlobalScope,
-			model.CurrentIOArgs.OutputCsv,
-			model.CurrentIOArgs.GenerateNonDp,
-			model.AdmissionsCleaned)
+		RunTestResultsCount(healthcaredp.GlobalScope,
+			healthcaredp.CurrentIOArgs.OutputCsv,
+			healthcaredp.CurrentIOArgs.GenerateNonDp,
+			healthcaredp.AdmissionsCleaned)
 	}
 
 	// Execute pipeline.
-	_, err = direct.Execute(context.Background(), model.GlobalPipeline)
+	_, err = direct.Execute(context.Background(), healthcaredp.GlobalPipeline)
 	if err != nil {
 		return fmt.Errorf("error executing pipeline: %v", err)
 	}
 
-	headers, err := model.StructCsvHeaders(model.Admission{})
+	headers, err := utils2.StructCsvHeaders(model.Admission{})
 	if err != nil {
 		return fmt.Errorf("error getting headers: %v", err)
 	}
-	model.WriteHeaders(model.CurrentIOArgs.OutputClean, headers...)
+	utils2.WriteHeaders(healthcaredp.CurrentIOArgs.OutputClean, headers...)
 	switch args[0] {
 	case "CountConditions":
-		ConditionsCountWriteHeaders(model.CurrentIOArgs.GenerateNonDp)
+		ConditionsCountWriteHeaders(healthcaredp.CurrentIOArgs.GenerateNonDp)
 	case "CountTestResults":
-		TestResultsCountWriteHeaders(model.CurrentIOArgs.GenerateNonDp)
+		TestResultsCountWriteHeaders(healthcaredp.CurrentIOArgs.GenerateNonDp)
 	}
 
 	return nil
@@ -108,26 +109,26 @@ func RunMeans(cmd *cobra.Command, args []string) (err error) {
 
 	switch args[0] {
 	case "MeanStayByWeek":
-		MeanStayByWeek(model.GlobalScope,
-			model.CurrentIOArgs.OutputCsv,
-			model.CurrentIOArgs.GenerateNonDp,
-			model.AdmissionsCleaned)
+		MeanStayByWeek(healthcaredp.GlobalScope,
+			healthcaredp.CurrentIOArgs.OutputCsv,
+			healthcaredp.CurrentIOArgs.GenerateNonDp,
+			healthcaredp.AdmissionsCleaned)
 	}
 
 	// Execute pipeline.
-	_, err = direct.Execute(context.Background(), model.GlobalPipeline)
+	_, err = direct.Execute(context.Background(), healthcaredp.GlobalPipeline)
 	if err != nil {
 		return fmt.Errorf("error executing pipeline: %v", err)
 	}
 
-	headers, err := model.StructCsvHeaders(model.Admission{})
+	headers, err := utils2.StructCsvHeaders(model.Admission{})
 	if err != nil {
 		return fmt.Errorf("error getting headers: %v", err)
 	}
-	model.WriteHeaders(model.CurrentIOArgs.OutputClean, headers...)
+	utils2.WriteHeaders(healthcaredp.CurrentIOArgs.OutputClean, headers...)
 	switch args[0] {
 	case "MeanStayByWeek":
-		MeanStayByWeekWriteHeaders(model.CurrentIOArgs.GenerateNonDp)
+		MeanStayByWeekWriteHeaders(healthcaredp.CurrentIOArgs.GenerateNonDp)
 	}
 
 	return nil
@@ -152,12 +153,12 @@ func RunFromFile(cmd *cobra.Command, args []string) (err error) {
 	}
 
 	beam.Init()
-	model.GlobalPipeline = beam.NewPipeline()
-	model.GlobalScope = model.GlobalPipeline.Root()
+	healthcaredp.GlobalPipeline = beam.NewPipeline()
+	healthcaredp.GlobalScope = healthcaredp.GlobalPipeline.Root()
 
 	var datasetFilename = config.PipelineDp.Configuration.DataDir + "/" + config.PipelineDp.Configuration.Input
 
-	model.Headers, err = model.GetHeaders(datasetFilename)
+	model.Headers, err = utils2.GetHeaders(datasetFilename)
 	if err != nil {
 		return fmt.Errorf("error getting headers: %v", err)
 	}
@@ -167,7 +168,7 @@ func RunFromFile(cmd *cobra.Command, args []string) (err error) {
 			break
 		}
 	}
-	newDFilename, err := model.RemoveHeadersAndSaveCsv(datasetFilename)
+	newDFilename, err := utils2.RemoveHeadersAndSaveCsv(datasetFilename)
 	if err != nil {
 		return fmt.Errorf("error removing headers: %v", err)
 	}
@@ -175,7 +176,7 @@ func RunFromFile(cmd *cobra.Command, args []string) (err error) {
 	if err != nil {
 		return fmt.Errorf("error compiling types map: %v", err)
 	}
-	pcol := model.ReadGenericInput(model.GlobalScope, newDFilename)
+	pcol := utils2.ReadGenericInput(healthcaredp.GlobalScope, newDFilename)
 
 	for _, op := range config.PipelineDp.Operations {
 		if !utils.SliceContains(model.Headers, op.Column) {
@@ -190,31 +191,31 @@ func RunFromFile(cmd *cobra.Command, args []string) (err error) {
 		fmt.Printf("Results for %s operation saved in file %s\n\n", op.OperationName, outFilename)
 		switch op.OperationType {
 		case "count":
-			pColCount, err := aggregations.CountColumn(model.GlobalScope, pcol, op, healthcaredp.Budget)
+			pColCount, err := aggregations.CountColumn(healthcaredp.GlobalScope, pcol, op, healthcaredp.Budget)
 			if err != nil {
 				return fmt.Errorf("error calculating count: %v", err)
 			}
-			model.WriteOutput(model.GlobalScope, *pColCount, outFilename)
-			model.PrintConsole(model.GlobalScope, *pColCount)
+			utils2.WriteOutput(healthcaredp.GlobalScope, *pColCount, outFilename)
+			utils2.PrintConsole(healthcaredp.GlobalScope, *pColCount)
 		case "mean_per_key":
-			pColMean, err := aggregations.MeanColumnByKey(model.GlobalScope, pcol, op, healthcaredp.Budget)
+			pColMean, err := aggregations.MeanColumnByKey(healthcaredp.GlobalScope, pcol, op, healthcaredp.Budget)
 			if err != nil {
 				return fmt.Errorf("error calculating mean: %v", err)
 			}
-			model.WriteOutput(model.GlobalScope, *pColMean, outFilename)
-			model.PrintConsole(model.GlobalScope, *pColMean)
+			utils2.WriteOutput(healthcaredp.GlobalScope, *pColMean, outFilename)
+			utils2.PrintConsole(healthcaredp.GlobalScope, *pColMean)
 		case "sum_per_key":
-			pColSum, err := aggregations.SumColumnByKey(model.GlobalScope, pcol, op, healthcaredp.Budget)
+			pColSum, err := aggregations.SumColumnByKey(healthcaredp.GlobalScope, pcol, op, healthcaredp.Budget)
 			if err != nil {
 				return fmt.Errorf("error calculating sum: %v", err)
 			}
-			model.WriteOutput(model.GlobalScope, *pColSum, outFilename)
-			model.PrintConsole(model.GlobalScope, *pColSum)
+			utils2.WriteOutput(healthcaredp.GlobalScope, *pColSum, outFilename)
+			utils2.PrintConsole(healthcaredp.GlobalScope, *pColSum)
 		}
 	}
 
 	// Execute pipeline.
-	_, err = direct.Execute(context.Background(), model.GlobalPipeline)
+	_, err = direct.Execute(context.Background(), healthcaredp.GlobalPipeline)
 	if err != nil {
 		return fmt.Errorf("error executing pipeline: %v", err)
 	}

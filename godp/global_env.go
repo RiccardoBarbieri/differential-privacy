@@ -1,10 +1,11 @@
-package model
+package healthcaredp
 
 import (
 	"fmt"
 	"github.com/apache/beam/sdks/v2/go/pkg/beam"
 	log "github.com/golang/glog"
 	"github.com/spf13/cobra"
+	"healthcaredp/model/utils"
 )
 
 type IOArgs struct {
@@ -52,8 +53,8 @@ func InitEnvironment(cmd *cobra.Command, args []string) (err error) {
 	GlobalPipeline = beam.NewPipeline()
 	GlobalScope = GlobalPipeline.Root()
 
-	AdmissionsCleaned = LoadCleanDataset(GlobalScope, CurrentIOArgs.InputCsv)
-	WriteOutput(GlobalScope, AdmissionsCleaned, CurrentIOArgs.OutputClean)
+	AdmissionsCleaned = utils.LoadCleanDataset(GlobalScope, CurrentIOArgs.InputCsv)
+	utils.WriteOutput(GlobalScope, AdmissionsCleaned, CurrentIOArgs.OutputClean)
 
 	return nil
 }

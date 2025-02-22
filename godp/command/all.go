@@ -2,7 +2,7 @@ package command
 
 import (
 	"github.com/spf13/cobra"
-	"healthcaredp/model"
+	"healthcaredp"
 	"healthcaredp/runs"
 )
 
@@ -11,7 +11,7 @@ var AllCmd = &cobra.Command{
 	Short:   "Run all the operations in the pipeline",
 	RunE:    runs.RunAll,
 	Args:    cobra.NoArgs,
-	PreRunE: model.InitEnvironment,
+	PreRunE: healthcaredp.InitEnvironment,
 }
 
 func init() {

@@ -76,18 +76,20 @@ func CountColumn(scope beam.Scope, col beam.PCollection, op model.OperationType,
 	scope = scope.Scope(op.OperationName)
 	pCol := pbeam.MakePrivateFromStruct(scope, col, bd.PrivacySpec, "Id")
 
-	pColumnValues := pbeam.ParDo(scope, func(struc model.ValuesStruct) string {
-		return struc.Values[op.Column]
-	}, pCol)
-	pColumnValuesCount := pbeam.Count(scope, pColumnValues, pbeam.CountParams{
-		PartitionSelectionParams: pbeam.PartitionSelectionParams{
-			Epsilon: bd.GetBudgetShare(op.OperationName).PartitionEpsilon,
-			Delta:   bd.GetBudgetShare(op.OperationName).PartitionDelta,
-		},
-		AggregationEpsilon:       bd.GetBudgetShare(op.OperationName).AggregationEpsilon,
-		AggregationDelta:         bd.GetBudgetShare(op.OperationName).AggregationDelta,
-		MaxPartitionsContributed: *op.PrivacyParams.MaxCategoriesContributed,
-		MaxValue:                 *op.PrivacyParams.MaxContributions,
-	})
+	pColumnValues := pbeam.ParDo(scope,
+		func(struc model.ValuesStruct) string {
+			return struc.Values[op.Column]
+		}, pCol)
+	pColumnValuesCount := pbeam.Count(scope, pColumnValues,
+		pbeam.CountParams{
+			PartitionSelectionParams: pbeam.PartitionSelectionParams{
+				Epsilon: bd.GetBudgetShare(op.OperationName).PartitionEpsilon,
+				Delta:   bd.GetBudgetShare(op.OperationName).PartitionDelta,
+			},
+			AggregationEpsilon:       bd.GetBudgetShare(op.OperationName).AggregationEpsilon,
+			AggregationDelta:         bd.GetBudgetShare(op.OperationName).AggregationDelta,
+			MaxPartitionsContributed: *op.PrivacyParams.MaxCategoriesContributed,
+			MaxValue:                 *op.PrivacyParams.MaxContributions,
+		})
 	return &pColumnValuesCount, nil
 }

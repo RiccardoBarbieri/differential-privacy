@@ -4,7 +4,7 @@ import (
 	"github.com/apache/beam/sdks/v2/go/pkg/beam"
 	"healthcaredp"
 	"healthcaredp/aggregations"
-	"healthcaredp/model"
+	"healthcaredp/model/utils"
 	"strings"
 )
 
@@ -20,16 +20,16 @@ func RunTestResultsCount(scope beam.Scope, outputCsv string, generateClear bool,
 
 	if generateClear {
 		testResultsCount := aggregations.CountTestResults(scope, admissions)
-		model.WriteOutput(scope, testResultsCount, testresultsCountOutputCsv)
+		utils.WriteOutput(scope, testResultsCount, testresultsCountOutputCsv)
 	}
 
 	testResultsCountDp := aggregations.CountTestResultsDp(scope, admissions, healthcaredp.Budget)
-	model.WriteOutput(scope, testResultsCountDp, testresultsCountOutputCsvDp)
+	utils.WriteOutput(scope, testResultsCountDp, testresultsCountOutputCsvDp)
 }
 
 func TestResultsCountWriteHeaders(generateClear bool) {
 	if generateClear {
-		model.WriteHeaders(testresultsCountOutputCsv, "Test Results", "Count")
+		utils.WriteHeaders(testresultsCountOutputCsv, "Test Results", "Count")
 	}
-	model.WriteHeaders(testresultsCountOutputCsvDp, "Test Results", "Count(DP)")
+	utils.WriteHeaders(testresultsCountOutputCsvDp, "Test Results", "Count(DP)")
 }
