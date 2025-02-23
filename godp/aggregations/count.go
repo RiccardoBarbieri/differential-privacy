@@ -5,8 +5,8 @@ import (
 	"github.com/apache/beam/sdks/v2/go/pkg/beam/register"
 	"github.com/apache/beam/sdks/v2/go/pkg/beam/transforms/stats"
 	"github.com/google/differential-privacy/privacy-on-beam/v3/pbeam"
-	"healthcaredp"
-	"healthcaredp/model"
+	"godp"
+	"godp/model"
 )
 
 func init() {

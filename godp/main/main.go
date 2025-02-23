@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	"healthcaredp/command"
+	"godp/command"
 )
 
 func main() {

@@ -2,8 +2,8 @@ package command
 
 import (
 	"github.com/spf13/cobra"
-	"healthcaredp"
-	"healthcaredp/runs"
+	"godp"
+	"godp/runs"
 )
 
 var CountCmd = &cobra.Command{
