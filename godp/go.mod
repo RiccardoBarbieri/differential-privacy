@@ -1,4 +1,4 @@
-module healthcaredp
+module godp
 
 go 1.23
 

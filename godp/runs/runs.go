@@ -6,11 +6,11 @@ import (
 	"github.com/apache/beam/sdks/v2/go/pkg/beam"
 	"github.com/apache/beam/sdks/v2/go/pkg/beam/runners/direct"
 	"github.com/spf13/cobra"
-	"healthcaredp"
-	"healthcaredp/aggregations"
-	"healthcaredp/model"
-	utils2 "healthcaredp/model/utils"
-	"healthcaredp/utils"
+	"godp"
+	"godp/aggregations"
+	"godp/model"
+	utils2 "godp/model/utils"
+	"godp/utils"
 	"strings"
 )
 

@@ -2,9 +2,9 @@ package utils
 
 import (
 	"github.com/apache/beam/sdks/v2/go/pkg/beam"
+	"godp/model"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
-	"healthcaredp/model"
 	"strings"
 )
 

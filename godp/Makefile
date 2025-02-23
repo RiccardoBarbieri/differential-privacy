@@ -1,4 +1,4 @@
-# Makefile for healthcaredp pipeline tool
+# Makefile for godp pipeline tool
 
 # Check for required environment variables
 GOROOT ?= $(shell go env GOROOT)
@@ -69,7 +69,7 @@ install: build
 	@mv bash_autocomplete $(HOME)/$(COMPLETION_DIR)/$(COMPLETION_SCRIPT)
 
 help:
-	@echo "Makefile for healthcaredp pipeline tool"
+	@echo "Makefile for godp pipeline tool"
 	@echo ""
 	@echo "Usage:"
 	@echo "  make [target]"

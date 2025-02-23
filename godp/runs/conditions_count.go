@@ -2,9 +2,9 @@ package runs
 
 import (
 	"github.com/apache/beam/sdks/v2/go/pkg/beam"
-	"healthcaredp"
-	"healthcaredp/aggregations"
-	"healthcaredp/model/utils"
+	"godp"
+	"godp/aggregations"
+	"godp/model/utils"
 	"strings"
 )
 

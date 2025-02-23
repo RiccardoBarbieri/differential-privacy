@@ -9,7 +9,7 @@ import (
 	"github.com/apache/beam/sdks/v2/go/pkg/beam/io/textio"
 	"github.com/apache/beam/sdks/v2/go/pkg/beam/register"
 	log "github.com/golang/glog"
-	"healthcaredp/model"
+	"godp/model"
 	"io"
 	"os"
 	"reflect"

@@ -5,7 +5,7 @@ import (
 	"github.com/apache/beam/sdks/v2/go/pkg/beam"
 	log "github.com/golang/glog"
 	"github.com/spf13/cobra"
-	"healthcaredp/model/utils"
+	"godp/model/utils"
 )
 
 type IOArgs struct {

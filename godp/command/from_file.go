@@ -2,7 +2,7 @@ package command
 
 import (
 	"github.com/spf13/cobra"
-	"healthcaredp/runs"
+	"godp/runs"
 )
 
 var FromFileCmd = &cobra.Command{

@@ -12,7 +12,7 @@
 1. Clone the repository:
     ```bash
     git clone https://github.com/RiccardoBarbieri/differential-privacy
-    cd differential-privacy/healthcaredp
+    cd differential-privacy/godp
     ```
 2. Build the program executable:
     ```bash

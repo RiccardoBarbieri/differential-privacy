@@ -3,8 +3,8 @@ package healthcaredp
 import (
 	"fmt"
 	"github.com/google/differential-privacy/privacy-on-beam/v3/pbeam"
-	"healthcaredp/model"
-	"healthcaredp/utils"
+	"godp/model"
+	"godp/utils"
 	"math"
 )
 
