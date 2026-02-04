@@ -2,14 +2,16 @@ package model
 
 import (
 	"fmt"
+
 	"github.com/go-playground/locales/en"
 	"github.com/go-playground/universal-translator"
+
+	"os"
+	"reflect"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/goccy/go-yaml"
 	log "github.com/golang/glog"
-	"os"
-	"reflect"
 )
 
 type OperationType struct {
@@ -51,7 +53,7 @@ type PrivacyBudgetType struct {
 type PipelineDp struct {
 	Configuration ConfigurationType `yaml:"configuration" validate:"required"`
 	PrivacyBudget PrivacyBudgetType `yaml:"privacy_budget" validate:"required"`
-	Types         []TypeType        `yaml:"types" validate:"required"`
+	Types         []TypeType        `yaml:"types"`
 	Operations    []OperationType   `yaml:"operations" validate:"required"`
 }
 
@@ -197,10 +199,5 @@ func LoadYamlConfig(filename string) (config *YamlConfig, err error) {
 		return nil, fmt.Errorf("validation failed: %v", err)
 	}
 
-	//marshal, err := yaml.Marshal(&config)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//fmt.Println(string(marshal))<
 	return config, nil
 }

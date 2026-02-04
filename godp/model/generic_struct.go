@@ -3,11 +3,12 @@ package model
 import (
 	"encoding/csv"
 	"fmt"
-	"github.com/apache/beam/sdks/v2/go/pkg/beam/register"
-	"github.com/ompluscator/dynamic-struct"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/apache/beam/sdks/v2/go/pkg/beam/register"
+	"github.com/ompluscator/dynamic-struct"
 )
 
 func init() {
@@ -67,8 +68,8 @@ func CreateGenericStruct(line string, emit func(struc ValuesStruct)) error {
 	baseStruct.Values = make(map[string]string)
 	for i, col := range cols {
 		baseStruct.Values[Headers[i]] = col
-		baseStruct.Id = cols[IdFieldIndex]
 	}
+	baseStruct.Id = cols[IdFieldIndex]
 
 	emit(baseStruct)
 	return nil

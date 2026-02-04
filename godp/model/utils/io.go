@@ -4,39 +4,24 @@ import (
 	"bufio"
 	"encoding/csv"
 	"fmt"
-	"github.com/apache/beam/sdks/v2/go/pkg/beam"
-	"github.com/apache/beam/sdks/v2/go/pkg/beam/core/typex"
-	"github.com/apache/beam/sdks/v2/go/pkg/beam/io/textio"
-	"github.com/apache/beam/sdks/v2/go/pkg/beam/register"
-	log "github.com/golang/glog"
 	"godp/model"
 	"io"
 	"os"
 	"reflect"
 	"strings"
+
+	"github.com/apache/beam/sdks/v2/go/pkg/beam"
+	"github.com/apache/beam/sdks/v2/go/pkg/beam/core/typex"
+	"github.com/apache/beam/sdks/v2/go/pkg/beam/io/textio"
+	"github.com/apache/beam/sdks/v2/go/pkg/beam/register"
+	log "github.com/golang/glog"
 )
 
 func init() {
 	register.Function2x0[string, beam.V](printKVConsoleFn)
-	register.Function1x0[model.Admission](printAdmissionConsoleFn)
 	register.Function1x0[model.ValuesStruct](printInterfaceConsoleFn)
 	register.Function1x0[string](printStringConsoleFn)
 }
-
-func LoadCleanDataset(scope beam.Scope, fileName string) beam.PCollection {
-	scope = scope.Scope("LoadCleanDataset")
-	admissions := ReadInput(scope, fileName)
-	admissionsCleaned := CleanDataset(scope, admissions)
-	return admissionsCleaned
-}
-
-// ReadInput reads from input csv file and returns a beam PCollection of Admission
-func ReadInput(scope beam.Scope, fileName string) beam.PCollection {
-	scope = scope.Scope("readInput")
-	lines := textio.Read(scope, fileName)
-	return beam.ParDo(scope, model.CreateAdmissionFn, lines)
-}
-
 func ReadGenericInput(scope beam.Scope, fileName string) beam.PCollection {
 	scope = scope.Scope("readGenericInput")
 	lines := textio.Read(scope, fileName)
@@ -47,8 +32,6 @@ func WriteOutput(scope beam.Scope, col beam.PCollection, fileName string) {
 	scope = scope.Scope("WriteOutput")
 	if typex.IsKV(col.Type()) {
 		textio.Write(scope, fileName, beam.ParDo(scope, formatKVCsvFn, col))
-	} else if col.Type().Type() == reflect.TypeOf(model.Admission{}) {
-		textio.Write(scope, fileName, beam.ParDo(scope, formatStructCsvFn, col))
 	} else {
 		panic("unsupported output type: " + fmt.Sprintf("%T", col.Type()) + " filename: " + fileName)
 	}
@@ -121,8 +104,6 @@ func PrintConsole(scope beam.Scope, col beam.PCollection) {
 		beam.ParDo0(scope, printKVConsoleFn, col)
 	} else if col.Type().Type() == reflect.TypeOf("") {
 		beam.ParDo0(scope, printStringConsoleFn, col)
-	} else if col.Type().Type() == reflect.TypeOf(model.Admission{}) {
-		beam.ParDo0(scope, printAdmissionConsoleFn, col)
 	} else if col.Type().Type() == reflect.TypeOf(model.ValuesStruct{}) {
 		beam.ParDo0(scope, printInterfaceConsoleFn, col)
 	}
@@ -131,11 +112,6 @@ func PrintConsole(scope beam.Scope, col beam.PCollection) {
 // printKVConsoleFn is a DoFn that prints key-value pairs to the console and returns the printed value.
 func printKVConsoleFn(k string, v beam.V) {
 	fmt.Printf("%s -> %d\n", k, v)
-}
-
-// printAdmissionConsoleFn is a DoFn that prints Admission objects to the console and returns the printed value.
-func printAdmissionConsoleFn(admission model.Admission) {
-	fmt.Printf("%s\n", admission)
 }
 
 func printInterfaceConsoleFn(baseStruct model.ValuesStruct) {

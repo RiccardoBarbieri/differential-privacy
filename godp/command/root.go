@@ -5,7 +5,7 @@ import (
 )
 
 var RootCmd = &cobra.Command{
-	Version: "1.0.0",
+	Version: "1.0.1",
 	Use:     "godp",
 	Short:   "A pipeline to anonymize csv datasets using differential privacy techniques with privacy-on-beam",
 	Args:    cobra.NoArgs,
@@ -14,9 +14,6 @@ var RootCmd = &cobra.Command{
 
 func init() {
 
-	RootCmd.AddCommand(AllCmd)
-	RootCmd.AddCommand(CountCmd)
-	RootCmd.AddCommand(MeanCmd)
 	RootCmd.AddCommand(FromFileCmd)
 
 	RootCmd.PersistentFlags().String("input-csv", "", "Name of the csv file that contains the csv dataset")
