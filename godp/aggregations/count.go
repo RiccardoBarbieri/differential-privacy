@@ -5,6 +5,7 @@ import (
 	"godp/model"
 
 	"github.com/apache/beam/sdks/v2/go/pkg/beam"
+	"github.com/apache/beam/sdks/v2/go/pkg/beam/transforms/stats"
 	"github.com/google/differential-privacy/privacy-on-beam/v3/pbeam"
 )
 
@@ -31,4 +32,15 @@ func CountColumn(scope beam.Scope, col beam.PCollection, op model.OperationType,
 			MaxValue:                 *op.PrivacyParams.MaxContributions,
 		})
 	return &pColumnValuesCount, nil
+}
+
+func CountColumnClear(scope beam.Scope, col beam.PCollection, op model.OperationType) (*beam.PCollection, error) {
+	scope = scope.Scope(op.OperationName)
+	columnValues := beam.ParDo(scope,
+		func(struc model.ValuesStruct) string {
+			return struc.Values[op.Column]
+		}, col)
+
+	columnValuesCount := stats.Count(scope, columnValues)
+	return &columnValuesCount, nil
 }

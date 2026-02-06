@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/apache/beam/sdks/v2/go/pkg/beam"
+	"github.com/apache/beam/sdks/v2/go/pkg/beam/transforms/stats"
 	log "github.com/golang/glog"
 	"github.com/google/differential-privacy/privacy-on-beam/v3/pbeam"
 )
@@ -47,4 +48,25 @@ func MeanColumnByKey(scope beam.Scope, col beam.PCollection, op model.OperationT
 	})
 	return &pValuesMeanByKey, nil
 
+}
+
+func MeanColumnByKeyClear(scope beam.Scope, col beam.PCollection, op model.OperationType) (*beam.PCollection, error) {
+	scope = scope.Scope(op.OperationName)
+	if _, ok := model.TypesMap[op.Column]; !ok {
+		return nil, fmt.Errorf("column type not specified for column: %s", op.Column)
+	}
+	if model.TypesMap[op.Column] != "float" && model.TypesMap[op.Column] != "int" {
+		return nil, fmt.Errorf("unsupported column type: %s for %s operation", model.TypesMap[op.Column], op.OperationType)
+	}
+
+	columnValuesByKey := beam.ParDo(scope, func(struc model.ValuesStruct) (string, float64) {
+		castedCol, err := strconv.ParseFloat(struc.Values[op.Column], 64)
+		if err != nil {
+			log.Fatalf("Failed to convert column value %s to type %s: %v", op.Column, model.TypesMap[op.Column], err)
+		}
+		return struc.Values[*op.KeyColumn], castedCol
+	}, col)
+
+	valuesMeanByKey := stats.MeanPerKey(scope, columnValuesByKey)
+	return &valuesMeanByKey, nil
 }
