@@ -23,6 +23,12 @@ func RunFromFile(cmd *cobra.Command, args []string) (err error) {
 	if err != nil {
 		return fmt.Errorf("error getting config file parameter: %v", err)
 	}
+
+	generateNonDp, err := cmd.Flags().GetBool("generate-non-dp")
+	if err != nil {
+		return fmt.Errorf("error getting generate-non-dp parameter: %v", err)
+	}
+
 	config, err = model.LoadYamlConfig(filename)
 	if err != nil {
 		return fmt.Errorf("error loading config file: %v", err)
@@ -70,6 +76,40 @@ func RunFromFile(cmd *cobra.Command, args []string) (err error) {
 			op.OperationName)
 
 		fmt.Printf("Results for %s operation saved in file %s\n\n", op.OperationName, outFilename)
+
+		if generateNonDp {
+			outFilenameClear := fmt.Sprintf("%s/%s_%s_clear.csv",
+				config.PipelineDp.Configuration.DataDir,
+				strings.TrimSuffix(config.PipelineDp.Configuration.OutputBaseName, ".csv"),
+				op.OperationName)
+
+			fmt.Printf("Results for %s operation (clear) saved in file %s\n\n", op.OperationName, outFilenameClear)
+			switch op.OperationType {
+			case "count":
+				pColCountClear, err := aggregations.CountColumnClear(healthcaredp.GlobalScope, pcol, op)
+				if err != nil {
+					return fmt.Errorf("error calculating clear count: %v", err)
+				}
+				modelutils.WriteOutput(healthcaredp.GlobalScope, *pColCountClear, outFilenameClear)
+				modelutils.PrintConsole(healthcaredp.GlobalScope, *pColCountClear)
+			case "mean_per_key":
+				pColMeanClear, err := aggregations.MeanColumnByKeyClear(healthcaredp.GlobalScope, pcol, op)
+				if err != nil {
+					return fmt.Errorf("error calculating clear mean: %v", err)
+				}
+				modelutils.WriteOutput(healthcaredp.GlobalScope, *pColMeanClear, outFilenameClear)
+				modelutils.PrintConsole(healthcaredp.GlobalScope, *pColMeanClear)
+			case "sum_per_key":
+				pColSumClear, err := aggregations.SumColumnByKeyClear(healthcaredp.GlobalScope, pcol, op)
+				if err != nil {
+					return fmt.Errorf("error calculating clear sum: %v", err)
+				}
+				modelutils.WriteOutput(healthcaredp.GlobalScope, *pColSumClear, outFilenameClear)
+				modelutils.PrintConsole(healthcaredp.GlobalScope, *pColSumClear)
+				modelutils.WriteHeaders(outFilenameClear, model.Headers...)
+			}
+		}
+
 		switch op.OperationType {
 		case "count":
 			pColCount, err := aggregations.CountColumn(healthcaredp.GlobalScope, pcol, op, healthcaredp.Budget)
