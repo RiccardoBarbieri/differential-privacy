@@ -1,11 +1,10 @@
 package healthcaredp
 
 import (
-	"fmt"
-	"github.com/google/differential-privacy/privacy-on-beam/v3/pbeam"
 	"godp/model"
-	"godp/utils"
 	"math"
+
+	"github.com/google/differential-privacy/privacy-on-beam/v3/pbeam"
 )
 
 type DpBudgetShare struct {
@@ -102,80 +101,6 @@ func (db *DpBudget) InitYamlBudgetShares(config *model.YamlConfig) (err error) {
 				PartitionEpsilon:   (op.Importance / totalImportance) * partitionSelectionEpsilon,
 				PartitionDelta:     (op.Importance / totalImportance) * delta,
 			}
-		}
-	}
-	return nil
-}
-
-func (db DpBudget) InitAllBudgetShares(importance map[string]float64) (err error) {
-	pSpecParams := pbeam.PrivacySpecParams{
-		AggregationEpsilon:        AggregationEpsilon,
-		PartitionSelectionEpsilon: PartitionEpsilon,
-		PartitionSelectionDelta:   Delta,
-	}
-	db.Delta = Delta
-	db.Epsilon = Epsilon
-	db.PrivacySpec, err = pbeam.NewPrivacySpec(pSpecParams)
-	db.BudgetShares = make(map[string]DpBudgetShare)
-	if err != nil {
-		return fmt.Errorf("failed to create privacy spec: %v", err)
-	}
-
-	if len(importance) != len(SupportedOperations) {
-		return fmt.Errorf("expected %d importance values, got %d", len(SupportedOperations), len(importance))
-	}
-	for _, key := range SupportedOperations {
-		if _, ok := importance[key]; !ok {
-			return fmt.Errorf("importance map missing operation: %s", key)
-		}
-	}
-	totalImportance := 0.0
-	for _, imp := range importance {
-		totalImportance += imp
-	}
-	for key, imp := range importance {
-		db.BudgetShares[key] = DpBudgetShare{
-			AggregationEpsilon: (imp / totalImportance) * AggregationEpsilon,
-			PartitionEpsilon:   (imp / totalImportance) * PartitionEpsilon,
-			AggregationDelta:   (imp / totalImportance) * Delta,
-			PartitionDelta:     Delta - (imp/totalImportance)*Delta,
-		}
-	}
-	return nil
-}
-
-func (db DpBudget) InitBudgetShares(importance map[string]float64) (err error) {
-	pSpecParams := pbeam.PrivacySpecParams{
-		AggregationEpsilon:        AggregationEpsilon,
-		PartitionSelectionEpsilon: PartitionEpsilon,
-		PartitionSelectionDelta:   Delta,
-	}
-	db.Delta = Delta
-	db.Epsilon = Epsilon
-	db.PrivacySpec, err = pbeam.NewPrivacySpec(pSpecParams)
-	db.BudgetShares = make(map[string]DpBudgetShare)
-	if err != nil {
-		return fmt.Errorf("failed to create privacy spec: %v", err)
-	}
-
-	if len(importance) > len(SupportedOperations) {
-		return fmt.Errorf("importance map has more than %d operations", len(SupportedOperations))
-	}
-	for key, _ := range importance {
-		if !utils.SliceContains(SupportedOperations, key) {
-			return fmt.Errorf("importance map contains unsupported operation: %s", key)
-		}
-	}
-	totalImportance := 0.0
-	for _, imp := range importance {
-		totalImportance += imp
-	}
-	for key, imp := range importance {
-		db.BudgetShares[key] = DpBudgetShare{
-			AggregationEpsilon: (imp / totalImportance) * AggregationEpsilon,
-			PartitionEpsilon:   (imp / totalImportance) * PartitionEpsilon,
-			AggregationDelta:   (imp / totalImportance) * Delta,
-			PartitionDelta:     Delta - (imp/totalImportance)*Delta,
 		}
 	}
 	return nil
