@@ -178,6 +178,14 @@ func insertSuffixFilename(s string, ext string, suffix string) string {
 	return strings.TrimSuffix(s, "."+ext) + suffix + "." + ext
 }
 
+func DeleteFile(filename string) error {
+	err := os.Remove(filename)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // GetHeaders reads the first line of a CSV file and returns the headers.
 //
 // Parameters:
