@@ -1,5 +1,6 @@
 \chapter{Meccanismi Differenzialmente Privati}
 
+
 \section{Definizione}
 La definizione seguente costituisce un formalismo più ristretto rispetto alla definizione completa, quest'ultima include un secondo parametro $\mathcal{\delta}$, la cui funzione e utilità verranno discusse in seguito.
 
@@ -21,7 +22,7 @@ Considerando che i due database $D_1$ e $D_2$ differiscono per un solo individuo
 \subsubsection{Un esempio pratico}
 \label{ex:coint_toss}
 Si supponga di volere condurre un sondaggio su una popolazione ponendo la domanda: "Nell'ultimo anno hai guidato un veicolo sotto l'influenza di alcol o stupefacenti?".
-Ovviamente, una persona alla quale viene posta direttamente questa domanda tenderà a mentire allo scopo di proteggere la propria privacy e evitare di autoincriminarsi. In questa istanza può rendersi utile l'applicazione di un meccanismo differenzialmente privato.
+Ovviamente, una persona alla quale viene posta direttamente questa domanda tenderà a mentire allo scopo di proteggere la propria privacy e evitare di auto incriminarsi. In questa istanza può rendersi utile l'applicazione di un meccanismo differenzialmente privato.
 
 Per ovviare a questa limitazione del processo di raccolta dati, si richiede ai partecipanti di lanciare una moneta senza mostrare il risultato:
 \begin{itemize}
@@ -154,12 +155,18 @@ La sensitività $\ell_1$ è definita come:
     \Delta f = \max_{\substack{x,y \in \mathbb{N}^{|\mathcal{X}|}\\||x - y||_1 = 1}} ||f(x) - f(y)||_1
 \end{equation}
 
-Utilizzando la sensitività della funzione in considerazione si calibra la scala (parametro $b$) della distribuzione di Laplace come $Lap(x|0,\Delta f/\varepsilon)$. Per la dimostrazione che l'utilizzo di questa distribuzione crea un meccanismo che rispetta $\varepsilon$-privacy differenziale consultare \ref{proof:laplace_mechanism}
+Utilizzando la sensitività della funzione in considerazione si calibra la scala (parametro $b$) della distribuzione di Laplace come 
+\begin{equation}
+    \label{expr:laplace-sensitivity}
+    Lap(x|0,\Delta f/\varepsilon)
+\end{equation}
+Per la dimostrazione che l'utilizzo di questa distribuzione crea un meccanismo che 
+rispetta $\varepsilon$-privacy differenziale consultare \ref{proof:laplace_mechanism}
 
 \subsection{Meccanismo di Laplace e singole statistiche}
-Si supponga di avere a disposizione un dataset che raccoglie le lamentele poste dai clienti di un'azienda tramite un modulo di feedback e di voler creare un report sul numero di lamentele poste al giorno; si decide di applicare il meccanismo di Laplace che aggiunge rumore calibrato per anonimizzare i risultati dell'analisi.
+Si supponga di avere a disposizione un dataset che raccoglie le lamentele poste dai clienti di un'azienda tramite un modulo di feedback, e di voler creare un report sul numero di lamentele poste al giorno; si decide di applicare il meccanismo di Laplace che aggiunge rumore calibrato per anonimizzare i risultati dell'analisi.
 
-Il primo passo per creare un meccanismo di Laplace differenzialmente privato è calcolare la sensitività della funzione in considerazione. Dato che si tratta di un'operazione di conteggio, intuitivamente si può pensare che questo valore sia pari a 1; tuttavia è necessario considerare la \textit{contribuzione massima} che un singolo utente può apportare al conteggio per valutare correttamente casi in cui un individuo presenta più di una lamentela al giorno.
+Il primo passo per creare un meccanismo di Laplace differenzialmente privato è calcolare la sensitività della funzione in considerazione. Dato che si tratta di un'operazione di conteggio, intuitivamente si può pensare che questo valore sia pari a 1; tuttavia è necessario considerare la \textit{contribuzione massima} che un singolo utente può apportare al conteggio per valut-are correttamente casi in cui un individuo presenta più di una lamentela al giorno.
 
 Se si considerasse $\Delta f = 1$ e quindi un parametro di scala per la distribuzione di Laplace pari a $b = \frac{1}{\varepsilon}$ si otterrebbe un meccanismo $x\varepsilon$-differenzialmente privato, dove $x$ corrisponde alla massima contribuzione che un singolo individuo può apportare al dataset. Supponendo un dataset di 500 unità con un utente che ha posto 5 lamentele, utilizzando $\Delta f = 1$ si otterrebbero due distribuzioni di probabilità con rapporto massimo di $e^{5\varepsilon}$, violando quindi la definizione di privacy differenziale.
 
@@ -219,6 +226,7 @@ Questa strategia porta a evidenziare il vero significato del parametro $\varepsi
 Una soluzione più flessibile rispetto a quella di creare $C$ statistiche $\varepsilon / C$-DP è quella di suddividere il budget in parti diseguali $\varepsilon_1, \varepsilon_2, \dots, \varepsilon_C$ tale che $\sum_{i=1}^{C} \varepsilon_i = \varepsilon$. Se esistono statistiche che sono più sensibili al rumore o necessitano di essere più accurate, è possibile allocare una porzione di budget maggiore: questo risulterà nell'aggiunta di una quantità di rumore minore, tuttavia sarà necessario aggiungere più rumore alle altre statistiche.
 
 \section{\texorpdfstring{$(\varepsilon,\delta)$}{TEXT}-privacy differenziale}
+\label{sec:eps-delta-dp}
 Si supponga di procedere con un sondaggio che pone domande ai soggetti senza un numero predefinito di possibili risposte e che può quindi dare vita a un numero di categorie non prestabilito.
 
 Questo tipo di raccolta di dati è intrinsecamente soggetto a distorsioni, imprecisioni e, in generale, rumore nei dati raccolti, come ad esempio risposte di soggetti che fraintendono la domanda, risposte intenzionalmente non valide o semplicemente risposte rare.
@@ -270,8 +278,8 @@ A questo scopo si fa uso della \textit{funzione di sopravvivenza} della variabil
     \caption{Parametro $\delta$ al variare della soglia}
 \end{figure}
 
-Dato che il parametro $\delta$ rappresenta la probabilità che un singolo utente ha di avere i propri dati esposti a seguito di una query al meccanismo DP, per questo viene spesso scelto $\delta \ll 1/n$ in quanto la probabilità che i dati di \textit{almeno un soggetto} vengano esposti è pari a $n\delta$: è necessario assicurarsi che questo valore sia abbastanza piccolo. Questa regola assume che i singoli eventi distintivi siano non correlati, spesso questo non è vero in realtà, ma è un'ottima approssimazione in pratica.
-Ad esempio, in un database con 1 milione di utenti basterebbe una soglia di 15 per ottenere un valore di $n\delta < 0.1$.
+Dato che il parametro $\delta$ rappresenta la probabilità che un singolo utente ha di avere i propri dati esposti a seguito di una query al meccanismo DP, viene spesso scelto $\delta \ll 1/n$ in quanto la probabilità che i dati di \textit{almeno un soggetto} vengano esposti è pari a $n\delta$: è necessario assicurarsi che questo valore sia abbastanza piccolo. Questa regola assume che i singoli eventi distintivi siano non correlati; spesso questo fatto non è in realtà corretto, ma è un'ottima approssimazione in pratica.
+Ad esempio, in un database con 1 milione di utenti, basterebbe una soglia di 15 per ottenere un valore di $n\delta < 0.1$.
 
 \subsection{Perdita di privacy}
 
@@ -374,14 +382,6 @@ Confrontando questa distribuzione con la distribuzione di Laplace si nota che le
     \label{plot:normalized_inv_plrv}
 \end{figure}
 
-Mentre la distribuzione di Laplace è ideale quando si vogliono rilasciare poche statistiche poiché garantisce $\varepsilon$-DP, la distribuzione normale risulta utile quando si vogliono rilasciare numeri elevati di statistiche in quanto, come si può vedere dal grafico, utilizzando una distribuzione normale è necessario aggiungere più rumore rispetto a una distribuzione di Laplace.
+Mentre il meccanismo di Laplace è particolarmente adatto al rilasci di un numero limitato di statistiche, poiché garantisce $\varepsilon$-DP, il meccanismo gaussiano risulta più appropriato quando si necessita di rilasciare un numero elevato di statistiche, in quanto soddisfa una forma rilassata di privacy differenziale, ovvero $(\varepsilon,\delta)$-DP,  e presenta migliori proprietà di composizione.
 
-
-
-
-
-\newpage
-Step successivi:\\
-analisi fatta finora prevede un modello interattivo\\
-considerazione su modello distribuito e locale\\
-considerazione su caching e possibilità di ripetere query\\
+Tuttavia, per garantire lo stesso livello di protezione della privacy, il meccanismo gaussiano richiede in genere l'aggiunta di una quantità di rumore maggiore rispetto al meccanismo di Laplace. In dataset di dimensione contenute tale rumore può avere un impatto significativo sul risultato dell'aggregazione, riducendo sensibilmente l'utilità dei dati.
