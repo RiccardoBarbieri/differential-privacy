@@ -20,6 +20,7 @@ func init() {
 	RootCmd.PersistentFlags().String("output-csv", "", "Base name of the output csv file that will contain output data (ex. output.csv)")
 	RootCmd.PersistentFlags().String("output-clean", "", "Name of the output csv file that will contain the cleaned dataset")
 	RootCmd.PersistentFlags().Bool("generate-non-dp", false, "Generate non-differentially private data")
+	RootCmd.PersistentFlags().Bool("print-console", false, "Print output to console")
 
 	//var err error
 	//err = RootCmd.MarkPersistentFlagRequired("input-csv")
