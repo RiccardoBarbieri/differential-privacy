@@ -1,0 +1,52 @@
+{
+  "victim": {
+    "victim_id": "VICTIM_001",
+    "department": "Engineering",
+    "age": 35,
+    "gender": "F",
+    "true_salary": 95000
+  },
+  "attack_without_dp": {
+    "successful": true,
+    "inferred_salary": 95000,
+    "true_salary": 95000
+  },
+  "dp_protection": {
+    "0.1": {
+      "clear_sum": 52411535.0,
+      "dp_sum": 49385352.15520096,
+      "noise_on_query": 3026182.8447990417,
+      "victim_salary": 95000,
+      "noise_to_salary_ratio": 31.854556261042546,
+      "protected": true,
+      "protection_level": "forte"
+    },
+    "0.5": {
+      "clear_sum": 52411535.0,
+      "dp_sum": 51444807.182089806,
+      "noise_on_query": 966727.8179101944,
+      "victim_salary": 95000,
+      "noise_to_salary_ratio": 10.17608229379152,
+      "protected": true,
+      "protection_level": "forte"
+    },
+    "1.0": {
+      "clear_sum": 52411535.0,
+      "dp_sum": 52623717.75154257,
+      "noise_on_query": 212182.7515425682,
+      "victim_salary": 95000,
+      "noise_to_salary_ratio": 2.2335026478165076,
+      "protected": true,
+      "protection_level": "forte"
+    },
+    "2.0": {
+      "clear_sum": 52411535.0,
+      "dp_sum": 52072340.63485885,
+      "noise_on_query": 339194.36514115334,
+      "victim_salary": 95000,
+      "noise_to_salary_ratio": 3.5704670014858246,
+      "protected": true,
+      "protection_level": "forte"
+    }
+  }
+}

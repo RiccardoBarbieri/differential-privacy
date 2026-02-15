@@ -1,0 +1,25 @@
+ANALISI RISULTATI: DE-ANONIMIZZAZIONE E PROTEZIONE CON GODP
+----------------------------------------------------------------------
+
+Vittima Target:
+  Reparto: Engineering
+  Età: 35
+  Genere: F
+  Stipendio reale: $95,000
+
+----------------------------------------------------------------------
+ATTACCO SENZA DP (Difference Attack)
+----------------------------------------------------------------------
+Stipendio dedotto: $95,000
+Stipendio reale:   $95,000
+Stato: ATTACCO RIUSCITO (precisione 100%)
+
+----------------------------------------------------------------------
+PROTEZIONE CON DP (GoDP)
+----------------------------------------------------------------------
+Epsilon       Valore Reale       Valore DP          Rumore Rumore/Stipendio Protezione          
+----------------------------------------------------------------------
+ε=0.1     $   52,411,535 $   49,385,352     -3,026,183        3185.5% FORTE               
+ε=0.5     $   52,411,535 $   51,444,807       -966,728        1017.6% FORTE               
+ε=1.0     $   52,411,535 $   52,623,718       +212,183         223.4% FORTE               
+ε=2.0     $   52,411,535 $   52,072,341       -339,194         357.0% FORTE               

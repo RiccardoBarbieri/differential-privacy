@@ -1,0 +1,25 @@
+{
+  "attack_type": "difference_attack",
+  "dp_protection": false,
+  "victim_department": "Engineering",
+  "victim_age": 35,
+  "victim_gender": "F",
+  "true_salary": 95000,
+  "inferred_salary": 95000,
+  "attack_successful": true,
+  "num_matching_individuals": 1,
+  "queries_used": [
+    {
+      "description": "Sum salaries in Engineering",
+      "result": 52411535
+    },
+    {
+      "description": "Sum salaries in Engineering, age != 35",
+      "result": 51661596
+    },
+    {
+      "description": "Sum salaries in Engineering, age = 35, gender != F",
+      "result": 654939
+    }
+  ]
+}

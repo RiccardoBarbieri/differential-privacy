@@ -1,0 +1,33 @@
+DIFFERENCE ATTACK - Senza Differential Privacy
+----------------------------------------------------------------------
+
+Informazioni ausiliarie note all'attaccante:
+  - Reparto: Engineering
+  - Età: 35
+  - Genere: F
+
+--- Step 1: Query sul reparto ---
+Query: SUM(Salary) WHERE Department = 'Engineering'
+Risultato: $52,411,535 (470 dipendenti)
+
+--- Step 2: Escludendo età vittima ---
+Query: SUM(Salary) WHERE Department = 'Engineering' AND Age != 35
+Risultato: $51,661,596 (462 dipendenti)
+
+--- Step 3: Calcolo intermedio ---
+SUM(Engineering, Age=35) = $52,411,535 - $51,661,596 = $749,939
+
+--- Step 4: Escludendo genere vittima ---
+Query: SUM(Salary) WHERE Dept='Engineering' AND Age=35 AND Gender!='F'
+Risultato: $654,939 (7 dipendenti)
+
+--- Step 5: Deduzione finale ---
+Stipendio vittima = $749,939 - $654,939 = $95,000
+Individui con queste caratteristiche: 1
+
+----------------------------------------------------------------------
+RISULTATO
+----------------------------------------------------------------------
+Stipendio dedotto: $95,000
+Stipendio reale:   $95,000
+Stato: ATTACCO RIUSCITO (precisione 100%)
