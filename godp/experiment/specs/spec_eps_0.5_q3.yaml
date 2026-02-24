@@ -1,0 +1,48 @@
+# Configurazione GoDP - Epsilon 0.5 - Query Q3
+# Q3: SUM(Salary) WHERE Department = 'Engineering' AND Gender = 'F' AND Age != 35
+# Terza query del difference attack: femmine del reparto escludendo l'eta della vittima
+pipelinedp:
+  configuration:
+    data_dir: "experiment/data"
+    input: "salaries.csv"
+    output_base_name: "output/eps_0.5/output.csv"
+    id_field: "ID"
+
+  privacy_budget:
+    noise_kind: "laplace"
+    delta: 1e-5
+    epsilon: 0.5
+    aggregation_share: 0.9
+
+  filters:
+    - column: "Department"
+      operator: "="
+      value: "Engineering"
+    - column: "Gender"
+      operator: "="
+      value: "F"
+    - column: "Age"
+      operator: "!="
+      value: "35"
+
+  types:
+    - column: "Salary"
+      type: int
+    - column: "Department"
+      type: string
+    - column: "Gender"
+      type: string
+    - column: "Age"
+      type: int
+
+  operations:
+    - name: Q3
+      type: sum_per_key
+      column: "Salary"
+      key_column: "Department"
+      importance: 1
+      privacy_params:
+        max_categories_contributed: 1
+        max_contributions_per_category: 1
+        min_value: 30000
+        max_value: 200000

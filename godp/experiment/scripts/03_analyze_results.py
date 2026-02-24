@@ -1,6 +1,16 @@
 #!/usr/bin/env python3
 """
-Analizza i risultati dell'esperimento DP confrontando output GoDP con diversi epsilon.
+Analizza i risultati dell'esperimento DP: confronta il difference attack
+eseguito senza DP (query esatte) con lo stesso attacco eseguito attraverso
+GoDP (query con rumore Laplace) a diversi livelli di epsilon.
+
+Per ogni epsilon, GoDP esegue le 3 query del difference attack:
+  Q1: SUM(Salary) WHERE Department = 'Engineering'
+  Q2: SUM(Salary) WHERE Department = 'Engineering' AND Gender != 'F'
+  Q3: SUM(Salary) WHERE Department = 'Engineering' AND Gender = 'F' AND Age != 35
+
+L'attaccante calcola: stipendio_dedotto = (Q1 - Q2) - Q3
+Con DP, il rumore si compone attraverso le sottrazioni.
 """
 
 import pandas as pd
@@ -15,6 +25,7 @@ VICTIM_FILE = DATA_DIR / "victim_info.json"
 ATTACK_FILE = OUTPUT_DIR / "attack_results.json"
 
 EPSILONS = [0.5, 5, 10, 15]
+QUERY_NAMES = ["Q1", "Q2", "Q3"]
 
 
 class NumpyEncoder(json.JSONEncoder):
@@ -36,69 +47,52 @@ def load_json(path):
         return json.load(f)
 
 
-def load_godp_sum(eps_dir: Path) -> dict:
-    """Carica l'output SUM di GoDP per un dato epsilon."""
-    sum_file = eps_dir / "output_SumSalaryByDepartment.csv"
-    if not sum_file.exists():
-        return {}
-    df = pd.read_csv(sum_file, header=None, names=["Department", "Sum"])
-    return dict(zip(df["Department"], df["Sum"]))
+def load_dp_query(eps_dir: Path, query_name: str, department: str):
+    """
+    Carica il risultato di una singola query DP da GoDP.
+
+    Returns:
+        Il valore della somma per il reparto specificato, o None se la
+        partizione e' stata rimossa dal meccanismo di partition selection.
+    """
+    query_file = eps_dir / f"output_{query_name}.csv"
+    if not query_file.exists():
+        return None
+    df = pd.read_csv(query_file, header=None, names=["Department", "Sum"])
+    row = df[df["Department"] == department]
+    if row.empty:
+        return None  # Partizione rimossa dalla partition selection
+    return float(row["Sum"].iloc[0])
 
 
-def generate_analysis_report(victim, attack, clear_sum, dp_results, dept, true_salary) -> str:
-    """Genera il report di analisi completo."""
-    lines = []
+def compute_dp_attack(q1, q2, q3):
+    """
+    Esegue il difference attack usando i risultati DP.
 
-    lines.append("ANALISI RISULTATI: DE-ANONIMIZZAZIONE E PROTEZIONE CON GODP")
-    lines.append("-" * 70)
+    Returns:
+        Dizionario con i risultati intermedi e finali dell'attacco.
+    """
+    result = {
+        "Q1": q1,
+        "Q2": q2,
+        "Q3": q3,
+        "all_queries_available": all(v is not None for v in [q1, q2, q3]),
+    }
 
-    lines.append(f"\nVittima Target:")
-    lines.append(f"  Reparto: {dept}")
-    lines.append(f"  Età: {victim['age']}")
-    lines.append(f"  Genere: {victim['gender']}")
-    lines.append(f"  Stipendio reale: ${true_salary:,}")
-
-    # Attacco senza DP
-    lines.append(f"\n" + "-" * 70)
-    lines.append("ATTACCO SENZA DP (Difference Attack)")
-    lines.append("-" * 70)
-    if attack.get("attack_successful"):
-        lines.append(f"Stipendio dedotto: ${attack['inferred_salary']:,}")
-        lines.append(f"Stipendio reale:   ${true_salary:,}")
-        lines.append(f"Stato: ATTACCO RIUSCITO (precisione 100%)")
+    if result["all_queries_available"]:
+        diff1 = q1 - q2  # Isola il gruppo eta
+        inferred = diff1 - q3  # Isola la vittima
+        result["diff1"] = diff1
+        result["inferred_salary"] = inferred
     else:
-        lines.append("Risultato non disponibile")
+        result["diff1"] = None
+        result["inferred_salary"] = None
+        # Annota quali query sono state rimosse
+        result["removed_queries"] = [
+            name for name, val in zip(QUERY_NAMES, [q1, q2, q3]) if val is None
+        ]
 
-    # Confronto con DP
-    lines.append(f"\n" + "-" * 70)
-    lines.append("PROTEZIONE CON DP (GoDP)")
-    lines.append("-" * 70)
-    lines.append(f"{'Epsilon':<10} {'Valore Reale':>15} {'Valore DP':>15} {'Rumore':>15} {'Rumore/Stipendio':>15} {'Protezione':<20}")
-    lines.append("-" * 70)
-
-    if clear_sum:
-        for eps in EPSILONS:
-            if dept in dp_results[eps]:
-                dp_sum = dp_results[eps][dept]
-                noise = dp_sum - clear_sum
-                abs_noise = abs(noise)
-                ratio = abs_noise / true_salary
-
-                # Livello di protezione basato sul rapporto rumore/stipendio
-                if ratio > 1.0:
-                    protection = "FORTE"
-                elif ratio > 0.5:
-                    protection = "MODERATA"
-                elif ratio > 0.3:
-                    protection = "DEBOLE"
-                else:
-                    protection = "INSUFFICIENTE"
-
-                lines.append(f"ε={eps:<7} ${clear_sum:>13,.0f} ${dp_sum:>13,.0f} {noise:>+14,.0f} {ratio:>14.1%} {protection:<20}")
-            else:
-                lines.append(f"ε={eps:<7} ${clear_sum:>13,.0f} {'[RIMOSSA]':>15} {'∞':>15} {'∞':>15} {'MASSIMA (rimossa)':<20}")
-
-    return "\n".join(lines)
+    return result
 
 
 def main():
@@ -110,78 +104,98 @@ def main():
     dept = victim["department"]
     true_salary = victim["true_salary"]
 
-    # valore reale dal dataset originale
-    dataset_file = DATA_DIR / "salaries.csv"
-    clear_sum = None
-    if dataset_file.exists():
-        df = pd.read_csv(dataset_file)
-        dept_sum = df[df["Department"] == dept]["Salary"].sum()
-        clear_sum = float(dept_sum)
-        # print(f"DEBUG: clear_sum = {clear_sum}, dataset: {len(df)} rows")
-    else:
-        pass
-        # print(f"DEBUG: dataset not found: {dataset_file}")
+    # Query clear (senza DP) dal risultato dell'attacco
+    clear_queries = attack.get("clear_queries", {})
 
-    # risultati DP per ogni epsilon
+    # Se non ci sono le clear_queries (vecchio formato), calcolale dal dataset
+    if not clear_queries:
+        df = pd.read_csv(DATA_DIR / "salaries.csv")
+        eng = df[df["Department"] == dept]
+        q1 = float(eng["Salary"].sum())
+        q2 = float(eng[eng["Gender"] != victim["gender"]]["Salary"].sum())
+        q3 = float(eng[(eng["Gender"] == victim["gender"]) & (eng["Age"] != victim["age"])]["Salary"].sum())
+        diff1 = q1 - q2
+        clear_queries = {
+            "Q1": q1,
+            "Q2": q2,
+            "Q3": q3,
+            "diff1": diff1,
+            "inferred": diff1 - q3
+        }
+
+    # Carica risultati DP per ogni epsilon
     dp_results = {}
     for eps in EPSILONS:
         eps_dir = DATA_DIR / "output" / f"eps_{eps}"
-        dp_results[eps] = load_godp_sum(eps_dir)
 
-    # Genera e salva report
-    report = generate_analysis_report(victim, attack, clear_sum, dp_results, dept, true_salary)
-    report_file = OUTPUT_DIR / "analysis_report.txt"
-    with open(report_file, "w") as f:
-        f.write(report)
+        q1 = load_dp_query(eps_dir, "Q1", dept)
+        q2 = load_dp_query(eps_dir, "Q2", dept)
+        q3 = load_dp_query(eps_dir, "Q3", dept)
 
-    # Salva anche un JSON con i dati strutturati
+        dp_results[eps] = compute_dp_attack(q1, q2, q3)
+
+    # Salva dati strutturati JSON
     analysis_data = {
         "victim": victim,
         "attack_without_dp": {
             "successful": attack.get("attack_successful", False),
             "inferred_salary": attack.get("inferred_salary"),
-            "true_salary": true_salary
+            "true_salary": true_salary,
+            "clear_queries": clear_queries,
         },
-        "dp_protection": {}
+        "dp_attack_results": {},
     }
 
-    if clear_sum:
-        for eps in EPSILONS:
-            if dept in dp_results[eps]:
-                dp_sum = dp_results[eps][dept]
-                noise = abs(dp_sum - clear_sum)
+    for eps in EPSILONS:
+        r = dp_results[eps]
+        entry = {
+            "all_queries_available": r["all_queries_available"],
+            "Q1_dp": r["Q1"],
+            "Q2_dp": r["Q2"],
+            "Q3_dp": r["Q3"],
+        }
 
-                noise_ratio = noise / true_salary
+        if r["all_queries_available"]:
+            inferred = r["inferred_salary"]
+            error = abs(inferred - true_salary)
+            error_ratio = error / true_salary
 
-                analysis_data["dp_protection"][str(eps)] = {
-                    "clear_sum": clear_sum,
-                    "dp_sum": dp_sum,
-                    "noise_on_query": noise,
-                    "victim_salary": true_salary,
-                    "noise_to_salary_ratio": noise_ratio,
-                    # Protetto se il rumore è almeno il 30% dello stipendio
-                    # (considerando che nel difference attack il rumore si compone)
-                    "protected": noise_ratio > 0.3,
-                    "protection_level": (
-                        "forte" if noise_ratio > 1.0 else
-                        "moderata" if noise_ratio > 0.5 else
-                        "debole" if noise_ratio > 0.3 else
-                        "insufficiente"
-                    )
-                }
-            else:
-                analysis_data["dp_protection"][str(eps)] = {
-                    "partition_removed": True,
-                    "protected": True,
-                    "protection_level": "massima (partizione rimossa)"
-                }
+            entry.update({
+                "diff1_dp": r["diff1"],
+                "inferred_salary": inferred,
+                "error": error,
+                "error_ratio": error_ratio,
+                "protected": error_ratio > 0.3,
+                "protection_level": (
+                    "forte" if error_ratio > 1.0 else
+                    "moderata" if error_ratio > 0.5 else
+                    "debole" if error_ratio > 0.3 else
+                    "insufficiente"
+                ),
+                "noise_Q1": r["Q1"] - clear_queries["Q1"],
+                "noise_Q2": r["Q2"] - clear_queries["Q2"],
+                "noise_Q3": r["Q3"] - clear_queries["Q3"],
+            })
+        else:
+            entry.update({
+                "partition_removed": True,
+                "protected": True,
+                "protection_level": "massima (partizione rimossa)",
+                "removed_queries": r.get("removed_queries", []),
+            })
+
+        analysis_data["dp_attack_results"][str(eps)] = entry
 
     with open(OUTPUT_DIR / "analysis_data.json", "w") as f:
         json.dump(analysis_data, f, indent=2, cls=NumpyEncoder)
 
-    protected_count = sum(1 for eps in EPSILONS if dept not in dp_results[eps] or
-                          (clear_sum and abs(dp_results[eps].get(dept, 0) - clear_sum) / true_salary > 0.3))
-    print(f"Analisi: {protected_count}/{len(EPSILONS)} configurazioni proteggono la vittima (soglia: rumore > 30% stipendio)")
+    # Stampa riepilogo
+    protected_count = sum(
+        1 for eps in EPSILONS
+        if not dp_results[eps]["all_queries_available"]
+        or abs(dp_results[eps]["inferred_salary"] - true_salary) / true_salary > 0.3
+    )
+    print(f"Analisi: {protected_count}/{len(EPSILONS)} configurazioni proteggono la vittima (soglia errore > 30% stipendio)")
 
 
 if __name__ == "__main__":

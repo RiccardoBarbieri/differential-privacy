@@ -10,16 +10,26 @@
   "num_matching_individuals": 1,
   "queries_used": [
     {
-      "description": "Sum salaries in Engineering",
-      "result": 17558674
+      "description": "Q1: Sum salaries in Engineering",
+      "result": 17558674,
+      "count": 157
     },
     {
-      "description": "Sum salaries in Engineering, age != 35",
-      "result": 17314184
+      "description": "Q2: Sum salaries in Engineering, gender != F",
+      "result": 9568613,
+      "count": 87
     },
     {
-      "description": "Sum salaries in Engineering, age = 35, gender != F",
-      "result": 149490
+      "description": "Q3: Sum salaries in Engineering, gender = F, age != 35",
+      "result": 7895061,
+      "count": 69
     }
-  ]
+  ],
+  "clear_queries": {
+    "Q1": 17558674,
+    "Q2": 9568613,
+    "Q3": 7895061,
+    "diff1": 7990061,
+    "inferred": 95000
+  }
 }

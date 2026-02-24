@@ -115,82 +115,55 @@ class NumpyEncoder(json.JSONEncoder):
 def difference_attack(df: pd.DataFrame, victim_info: dict) -> tuple:
     """
     Esegue l'attacco di differenza per dedurre lo stipendio della vittima.
-    Restituisce i risultati e un report testuale.
+
+    Strategia dell'attacco (3 query):
+      Q1: SUM(Salary) WHERE Dept = Engineering
+      Q2: SUM(Salary) WHERE Dept = Engineering AND Gender != 'F'
+      Q3: SUM(Salary) WHERE Dept = Engineering AND Gender = 'F' AND Age != 35
+
+    Calcolo:
+      Diff1 = Q1 - Q2  →  somma stipendi di tutte le donne in Engineering
+      Stipendio_vittima = Diff1 - Q3  →  isola la vittima (unica donna 35y in Eng)
+
+    Restituisce i risultati.
     """
     department = victim_info["department"]
     age = victim_info["age"]
     gender = victim_info["gender"]
     true_salary = victim_info["true_salary"]
 
-    report_lines = []
-    report_lines.append("DIFFERENCE ATTACK - Senza Differential Privacy")
-    report_lines.append("-" * 70)
+    # --- Q1: Somma stipendi nel reparto ---
+    filters_q1 = {"Department": department}
+    sum_q1 = non_dp_query_sum(df, filters_q1)
+    count_q1 = non_dp_query_count(df, filters_q1)
 
-    report_lines.append(f"\nInformazioni ausiliarie note all'attaccante:")
-    report_lines.append(f"  - Reparto: {department}")
-    report_lines.append(f"  - Età: {age}")
-    report_lines.append(f"  - Genere: {gender}")
-
-    # Query 1: Somma stipendi nel reparto
-    filters_dept = {"Department": department}
-    sum_dept = non_dp_query_sum(df, filters_dept)
-    count_dept = non_dp_query_count(df, filters_dept)
-
-    report_lines.append(f"\n--- Step 1: Query sul reparto ---")
-    report_lines.append(f"Query: SUM(Salary) WHERE Department = '{department}'")
-    report_lines.append(f"Risultato: ${sum_dept:,} ({count_dept} dipendenti)")
-
-    # Query 2: Escludendo età
-    filters_exclude_age = {
+    # --- Q2: Escludendo il genere della vittima ---
+    filters_q2 = {
         "Department": department,
+        "Gender": {"op": "!=", "value": gender}
+    }
+    sum_q2 = non_dp_query_sum(df, filters_q2)
+    count_q2 = non_dp_query_count(df, filters_q2)
+
+    # Calcolo intermedio: Diff1 = Q1 - Q2 = tutte le donne in Engineering
+    diff1 = sum_q1 - sum_q2
+    count_diff1 = count_q1 - count_q2
+
+    # --- Q3: Stesse donne del reparto, escludendo l'eta della vittima ---
+    filters_q3 = {
+        "Department": department,
+        "Gender": {"op": "==", "value": gender},
         "Age": {"op": "!=", "value": age}
     }
-    sum_exclude_age = non_dp_query_sum(df, filters_exclude_age)
-    count_exclude_age = non_dp_query_count(df, filters_exclude_age)
+    sum_q3 = non_dp_query_sum(df, filters_q3)
+    count_q3 = non_dp_query_count(df, filters_q3)
 
-    report_lines.append(f"\n--- Step 2: Escludendo età vittima ---")
-    report_lines.append(f"Query: SUM(Salary) WHERE Department = '{department}' AND Age != {age}")
-    report_lines.append(f"Risultato: ${sum_exclude_age:,} ({count_exclude_age} dipendenti)")
-
-    # Calcolo intermedio
-    sum_age_only = sum_dept - sum_exclude_age
-    count_age_only = count_dept - count_exclude_age
-
-    report_lines.append(f"\n--- Step 3: Calcolo intermedio ---")
-    report_lines.append(f"SUM({department}, Age={age}) = ${sum_dept:,} - ${sum_exclude_age:,} = ${sum_age_only:,}")
-
-    # Query 3: Escludendo genere
-    df_dept = df[df["Department"] == department]
-    df_dept_age = df_dept[df_dept["Age"] == age]
-    df_dept_age_not_gender = df_dept_age[df_dept_age["Gender"] != gender]
-
-    sum_exclude_gender = df_dept_age_not_gender["Salary"].sum()
-    count_exclude_gender = len(df_dept_age_not_gender)
-
-    report_lines.append(f"\n--- Step 4: Escludendo genere vittima ---")
-    report_lines.append(f"Query: SUM(Salary) WHERE Dept='{department}' AND Age={age} AND Gender!='{gender}'")
-    report_lines.append(f"Risultato: ${sum_exclude_gender:,} ({count_exclude_gender} dipendenti)")
-
-    # Calcolo finale
-    inferred_salary = sum_age_only - sum_exclude_gender
-    count_victims = count_age_only - count_exclude_gender
-
-    report_lines.append(f"\n--- Step 5: Deduzione finale ---")
-    report_lines.append(f"Stipendio vittima = ${sum_age_only:,} - ${sum_exclude_gender:,} = ${inferred_salary:,}")
-    report_lines.append(f"Individui con queste caratteristiche: {count_victims}")
+    # Calcolo finale: Stipendio vittima = Diff1 - Q3
+    inferred_salary = diff1 - sum_q3
+    count_victims = count_diff1 - count_q3
 
     # Risultato
-    report_lines.append(f"\n" + "-" * 70)
-    report_lines.append("RISULTATO")
-    report_lines.append("-" * 70)
-    report_lines.append(f"Stipendio dedotto: ${inferred_salary:,}")
-    report_lines.append(f"Stipendio reale:   ${true_salary:,}")
-
     attack_success = (count_victims == 1 and inferred_salary == true_salary)
-    if attack_success:
-        report_lines.append(f"Stato: ATTACCO RIUSCITO (precisione 100%)")
-    else:
-        report_lines.append(f"Stato: ATTACCO FALLITO")
 
     result = {
         "attack_type": "difference_attack",
@@ -203,13 +176,20 @@ def difference_attack(df: pd.DataFrame, victim_info: dict) -> tuple:
         "attack_successful": attack_success,
         "num_matching_individuals": count_victims,
         "queries_used": [
-            {"description": f"Sum salaries in {department}", "result": sum_dept},
-            {"description": f"Sum salaries in {department}, age != {age}", "result": sum_exclude_age},
-            {"description": f"Sum salaries in {department}, age = {age}, gender != {gender}", "result": sum_exclude_gender}
-        ]
+            {"description": f"Q1: Sum salaries in {department}", "result": sum_q1, "count": count_q1},
+            {"description": f"Q2: Sum salaries in {department}, gender != {gender}", "result": sum_q2, "count": count_q2},
+            {"description": f"Q3: Sum salaries in {department}, gender = {gender}, age != {age}", "result": sum_q3, "count": count_q3}
+        ],
+        "clear_queries": {
+            "Q1": sum_q1,
+            "Q2": sum_q2,
+            "Q3": sum_q3,
+            "diff1": diff1,
+            "inferred": inferred_salary
+        }
     }
 
-    return result, "\n".join(report_lines)
+    return result
 
 
 
@@ -221,12 +201,7 @@ def main():
     df, victim_info = load_data()
 
     # Esegui attacco principale
-    attack_result, attack_report = difference_attack(df, victim_info)
-
-    # Salva report
-    report_file = OUTPUT_DIR / "attack_report.txt"
-    with open(report_file, "w") as f:
-        f.write(attack_report)
+    attack_result = difference_attack(df, victim_info)
 
     # Salva risultati JSON
     with open(RESULTS_FILE, "w") as f:

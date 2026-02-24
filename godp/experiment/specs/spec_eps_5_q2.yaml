@@ -1,4 +1,6 @@
-# Configurazione GoDP - Epsilon 5
+# Configurazione GoDP - Epsilon 5 - Query Q2
+# Q2: SUM(Salary) WHERE Department = 'Engineering' AND Gender != 'F'
+# Seconda query del difference attack: esclude il genere della vittima
 pipelinedp:
   configuration:
     data_dir: "experiment/data"
@@ -10,18 +12,26 @@ pipelinedp:
     noise_kind: "laplace"
     delta: 1e-5
     epsilon: 5
-    aggregation_share: 0.5
+    aggregation_share: 0.9
+
+  filters:
+    - column: "Department"
+      operator: "="
+      value: "Engineering"
+    - column: "Gender"
+      operator: "!="
+      value: "F"
 
   types:
-    - column: "Age"
-      type: int
-    - column: "YearsExperience"
-      type: int
     - column: "Salary"
       type: int
+    - column: "Department"
+      type: string
+    - column: "Gender"
+      type: string
 
   operations:
-    - name: SumSalaryByDepartment
+    - name: Q2
       type: sum_per_key
       column: "Salary"
       key_column: "Department"
@@ -31,4 +41,3 @@ pipelinedp:
         max_contributions_per_category: 1
         min_value: 30000
         max_value: 200000
-

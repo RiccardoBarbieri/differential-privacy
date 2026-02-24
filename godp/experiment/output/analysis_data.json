@@ -9,44 +9,73 @@
   "attack_without_dp": {
     "successful": true,
     "inferred_salary": 95000,
-    "true_salary": 95000
+    "true_salary": 95000,
+    "clear_queries": {
+      "Q1": 17558674,
+      "Q2": 9568613,
+      "Q3": 7895061,
+      "diff1": 7990061,
+      "inferred": 95000
+    }
   },
-  "dp_protection": {
+  "dp_attack_results": {
     "0.5": {
-      "clear_sum": 17558674.0,
-      "dp_sum": 17056905.549064636,
-      "noise_on_query": 501768.45093536377,
-      "victim_salary": 95000,
-      "noise_to_salary_ratio": 5.281773167740671,
+      "all_queries_available": false,
+      "Q1_dp": 17302306.79232931,
+      "Q2_dp": null,
+      "Q3_dp": null,
+      "partition_removed": true,
       "protected": true,
-      "protection_level": "forte"
+      "protection_level": "massima (partizione rimossa)",
+      "removed_queries": [
+        "Q2",
+        "Q3"
+      ]
     },
     "5": {
-      "clear_sum": 17558674.0,
-      "dp_sum": 17580142.883744836,
-      "noise_on_query": 21468.883744835854,
-      "victim_salary": 95000,
-      "noise_to_salary_ratio": 0.22598824994564057,
-      "protected": false,
-      "protection_level": "insufficiente"
+      "all_queries_available": true,
+      "Q1_dp": 17536304.08582723,
+      "Q2_dp": 9461865.519799292,
+      "Q3_dp": 7831059.685648501,
+      "diff1_dp": 8074438.566027939,
+      "inferred_salary": 243378.8803794384,
+      "error": 148378.8803794384,
+      "error_ratio": 1.5618829513625094,
+      "protected": true,
+      "protection_level": "forte",
+      "noise_Q1": -22369.914172768593,
+      "noise_Q2": -106747.48020070791,
+      "noise_Q3": -64001.31435149908
     },
     "10": {
-      "clear_sum": 17558674.0,
-      "dp_sum": 17510146.500117064,
-      "noise_on_query": 48527.49988293648,
-      "victim_salary": 95000,
-      "noise_to_salary_ratio": 0.5108157882414366,
-      "protected": true,
-      "protection_level": "moderata"
+      "all_queries_available": true,
+      "Q1_dp": 17580418.651112497,
+      "Q2_dp": 9568329.396535426,
+      "Q3_dp": 7894501.988807291,
+      "diff1_dp": 8012089.2545770705,
+      "inferred_salary": 117587.26576977968,
+      "error": 22587.265769779682,
+      "error_ratio": 0.23776069231347033,
+      "protected": false,
+      "protection_level": "insufficiente",
+      "noise_Q1": 21744.651112496853,
+      "noise_Q2": -283.60346457362175,
+      "noise_Q3": -559.0111927092075
     },
     "15": {
-      "clear_sum": 17558674.0,
-      "dp_sum": 17547122.87073925,
-      "noise_on_query": 11551.129260748625,
-      "victim_salary": 95000,
-      "noise_to_salary_ratio": 0.12159083432366974,
+      "all_queries_available": true,
+      "Q1_dp": 17566077.914193258,
+      "Q2_dp": 9565614.076788366,
+      "Q3_dp": 7921207.531830177,
+      "diff1_dp": 8000463.837404892,
+      "inferred_salary": 79256.30557471514,
+      "error": 15743.694425284863,
+      "error_ratio": 0.16572309921352488,
       "protected": false,
-      "protection_level": "insufficiente"
+      "protection_level": "insufficiente",
+      "noise_Q1": 7403.9141932576895,
+      "noise_Q2": -2998.923211634159,
+      "noise_Q3": 26146.53183017671
     }
   }
 }

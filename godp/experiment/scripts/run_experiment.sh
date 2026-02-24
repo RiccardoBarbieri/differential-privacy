@@ -5,27 +5,33 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 EXPERIMENT_DIR="$(dirname "$SCRIPT_DIR")"
 PROJECT_DIR="$(dirname "$EXPERIMENT_DIR")"
 
-echo "Generazione dataset..."
+echo "=== Esperimento: Difference Attack con e senza DP ==="
+echo ""
+
+echo "[1/5] Generazione dataset..."
 python3 "$SCRIPT_DIR/01_generate_dataset.py"
 
-echo "Esecuzione attacco (senza DP)..."
+echo "[2/5] Esecuzione difference attack (senza DP)..."
 python3 "$SCRIPT_DIR/02_attack_non_dp.py"
 
-echo "Esecuzione GoDP (epsilon: 0.5, 5, 10, 15)..."
+echo "[3/5] Esecuzione GoDP (3 query x 4 epsilon = 12 esecuzioni)..."
 cd "$PROJECT_DIR"
 make build -s 2>/dev/null || make build
-bash "$SCRIPT_DIR/run_all_epsilons.sh" 2>/dev/null
+bash "$SCRIPT_DIR/run_all_epsilons.sh"
 
-echo "Analisi risultati..."
+echo "[4/5] Analisi risultati..."
 python3 "$SCRIPT_DIR/03_analyze_results.py"
 
-echo "Generazione grafici..."
+echo "[5/5] Generazione grafici..."
 python3 "$SCRIPT_DIR/04_generate_plots.py"
 
-echo "Output in experiment/output/:"
-echo "  - attack_report.txt         Report attacco"
-echo "  - analysis_report.txt       Analisi confronto DP"
-echo "  - attack_results.json       Risultati JSON"
+echo ""
+echo "=== Esperimento completato ==="
+echo ""
+echo "Report in experiment/output/:"
+echo "  - attack_report.txt         Report attacco senza DP"
+echo "  - analysis_report.txt       Analisi confronto con/senza DP"
+echo "  - attack_results.json       Risultati JSON attacco"
 echo "  - analysis_data.json        Dati analisi JSON"
 echo ""
 echo "Grafici in experiment/plots/:"
