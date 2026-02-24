@@ -27,6 +27,10 @@ ATTACK_FILE = OUTPUT_DIR / "attack_results.json"
 EPSILONS = [0.5, 5, 10, 15]
 QUERY_NAMES = ["Q1", "Q2", "Q3"]
 
+ERROR_RATIO_LOW = 0.1
+ERROR_RATIO_MODERATE = 0.3
+ERROR_RATIO_HIGH = 1.0
+
 
 class NumpyEncoder(json.JSONEncoder):
     """Custom JSON encoder per tipi numpy."""
@@ -165,12 +169,11 @@ def main():
                 "inferred_salary": inferred,
                 "error": error,
                 "error_ratio": error_ratio,
-                "protected": error_ratio > 0.3,
+                "protected": error_ratio > ERROR_RATIO_LOW,
                 "protection_level": (
-                    "forte" if error_ratio > 1.0 else
-                    "moderata" if error_ratio > 0.5 else
-                    "debole" if error_ratio > 0.3 else
-                    "insufficiente"
+                    "forte" if error_ratio > ERROR_RATIO_HIGH else
+                    "moderata" if error_ratio > ERROR_RATIO_MODERATE else
+                    "sufficiente"
                 ),
                 "noise_Q1": r["Q1"] - clear_queries["Q1"],
                 "noise_Q2": r["Q2"] - clear_queries["Q2"],
