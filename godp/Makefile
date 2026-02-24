@@ -57,6 +57,7 @@ clean:
 	@echo "Cleaning up..."
 	@rm -rf $(BUILD_DIR)
 	@rm $(HOME)/.local/bin/$(BINARY_NAME)
+	@rm -rf $(HOME)/$(COMPLETION_DIR)/$(COMPLETION_SCRIPT)
 
 
 install: build

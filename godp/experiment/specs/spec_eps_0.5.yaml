@@ -9,8 +9,19 @@ pipelinedp:
   privacy_budget:
     noise_kind: "laplace"
     delta: 1e-5
-    epsilon: 0.5
-    aggregation_share: 0.5
+    epsilon: 10
+    aggregation_share: 0.9
+
+  filters:
+    - column: "Age"
+      operator: ">="
+      value: "35"
+    - column: "Gender"
+      operator: "!="
+      value: "F"
+    - column: "Department"
+      operator: "="
+      value: "Engineering"
 
   types:
     - column: "Age"
@@ -19,6 +30,10 @@ pipelinedp:
       type: int
     - column: "Salary"
       type: int
+    - column: "Gender"
+      type: string
+    - column: "Department"
+      type: string
 
   operations:
     - name: SumSalaryByDepartment

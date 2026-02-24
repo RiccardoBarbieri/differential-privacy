@@ -43,6 +43,12 @@ type TypeType struct {
 	Type   string `yaml:"type" validate:"required,oneof=int string bool float date time datetime"`
 }
 
+type FilterType struct {
+	Column   string `yaml:"column" validate:"required"`
+	Operator string `yaml:"operator" validate:"required,oneof== != < > <= >="`
+	Value    string `yaml:"value" validate:"required"`
+}
+
 type PrivacyBudgetType struct {
 	NoiseKind        string  `yaml:"noise_kind" validate:"required,oneof=gauss laplace"`
 	Delta            float64 `yaml:"delta" validate:"required"`
@@ -54,6 +60,7 @@ type PipelineDp struct {
 	Configuration ConfigurationType `yaml:"configuration" validate:"required"`
 	PrivacyBudget PrivacyBudgetType `yaml:"privacy_budget" validate:"required"`
 	Types         []TypeType        `yaml:"types"`
+	Filters       []FilterType      `yaml:"filters"`
 	Operations    []OperationType   `yaml:"operations" validate:"required"`
 }
 

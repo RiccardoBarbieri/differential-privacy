@@ -68,7 +68,16 @@ func RunFromFile(cmd *cobra.Command, args []string) (err error) {
 	if err != nil {
 		return fmt.Errorf("error compiling types map: %v", err)
 	}
+
+	// Validate that filter columns are specified in types
+	if err := model.ValidateFilterColumns(config.PipelineDp.Filters, config.PipelineDp.Types); err != nil {
+		return fmt.Errorf("filter validation error: %v", err)
+	}
+
 	pcol := modelutils.ReadGenericInput(healthcaredp.GlobalScope, newDFilename)
+
+	// Apply filters before aggregations
+	pcol = model.ApplyFilters(healthcaredp.GlobalScope, pcol, config.PipelineDp.Filters, model.TypesMap)
 
 	for _, op := range config.PipelineDp.Operations {
 		if !utils.SliceContains(model.Headers, op.Column) {
