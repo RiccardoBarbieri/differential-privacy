@@ -8,7 +8,7 @@ EXPERIMENT_DIR="$(dirname "$SCRIPT_DIR")"
 PROJECT_DIR="$(dirname "$EXPERIMENT_DIR")"
 GODP="$PROJECT_DIR/main/build/godp"
 
-EPSILONS=("0.1" "0.5" "1.0" "2.0")
+EPSILONS=("0.5" "5" "10" "15")
 
 cd "$PROJECT_DIR"
 

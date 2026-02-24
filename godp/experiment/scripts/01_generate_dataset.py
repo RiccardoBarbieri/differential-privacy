@@ -15,7 +15,7 @@ OUTPUT_FILE = DATA_DIR / "salaries.csv"
 
 np.random.seed(42)
 
-NUM_EMPLOYEES = 1500
+NUM_EMPLOYEES = 542
 
 # distribuzione dei reparti
 DEPARTMENTS = {

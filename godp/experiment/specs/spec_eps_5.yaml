@@ -1,15 +1,15 @@
-# Configurazione GoDP - Epsilon 1.0
+# Configurazione GoDP - Epsilon 5
 pipelinedp:
   configuration:
     data_dir: "experiment/data"
     input: "salaries.csv"
-    output_base_name: "output/eps_1.0/output.csv"
+    output_base_name: "output/eps_5/output.csv"
     id_field: "ID"
 
   privacy_budget:
     noise_kind: "laplace"
     delta: 1e-5
-    epsilon: 1.0
+    epsilon: 5
     aggregation_share: 0.5
 
   types:

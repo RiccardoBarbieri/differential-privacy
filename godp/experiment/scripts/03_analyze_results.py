@@ -14,7 +14,7 @@ OUTPUT_DIR = SCRIPT_DIR.parent / "output"
 VICTIM_FILE = DATA_DIR / "victim_info.json"
 ATTACK_FILE = OUTPUT_DIR / "attack_results.json"
 
-EPSILONS = [0.1, 0.5, 1.0, 2.0]
+EPSILONS = [0.5, 5, 10, 15]
 
 
 class NumpyEncoder(json.JSONEncoder):

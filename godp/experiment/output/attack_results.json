@@ -11,15 +11,15 @@
   "queries_used": [
     {
       "description": "Sum salaries in Engineering",
-      "result": 52411535
+      "result": 17558674
     },
     {
       "description": "Sum salaries in Engineering, age != 35",
-      "result": 51661596
+      "result": 17314184
     },
     {
       "description": "Sum salaries in Engineering, age = 35, gender != F",
-      "result": 654939
+      "result": 149490
     }
   ]
 }

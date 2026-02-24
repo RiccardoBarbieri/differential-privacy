@@ -8,21 +8,21 @@ Informazioni ausiliarie note all'attaccante:
 
 --- Step 1: Query sul reparto ---
 Query: SUM(Salary) WHERE Department = 'Engineering'
-Risultato: $52,411,535 (470 dipendenti)
+Risultato: $17,558,674 (157 dipendenti)
 
 --- Step 2: Escludendo età vittima ---
 Query: SUM(Salary) WHERE Department = 'Engineering' AND Age != 35
-Risultato: $51,661,596 (462 dipendenti)
+Risultato: $17,314,184 (154 dipendenti)
 
 --- Step 3: Calcolo intermedio ---
-SUM(Engineering, Age=35) = $52,411,535 - $51,661,596 = $749,939
+SUM(Engineering, Age=35) = $17,558,674 - $17,314,184 = $244,490
 
 --- Step 4: Escludendo genere vittima ---
 Query: SUM(Salary) WHERE Dept='Engineering' AND Age=35 AND Gender!='F'
-Risultato: $654,939 (7 dipendenti)
+Risultato: $149,490 (2 dipendenti)
 
 --- Step 5: Deduzione finale ---
-Stipendio vittima = $749,939 - $654,939 = $95,000
+Stipendio vittima = $244,490 - $149,490 = $95,000
 Individui con queste caratteristiche: 1
 
 ----------------------------------------------------------------------

@@ -12,41 +12,41 @@
     "true_salary": 95000
   },
   "dp_protection": {
-    "0.1": {
-      "clear_sum": 52411535.0,
-      "dp_sum": 49385352.15520096,
-      "noise_on_query": 3026182.8447990417,
-      "victim_salary": 95000,
-      "noise_to_salary_ratio": 31.854556261042546,
-      "protected": true,
-      "protection_level": "forte"
-    },
     "0.5": {
-      "clear_sum": 52411535.0,
-      "dp_sum": 51444807.182089806,
-      "noise_on_query": 966727.8179101944,
+      "clear_sum": 17558674.0,
+      "dp_sum": 17056905.549064636,
+      "noise_on_query": 501768.45093536377,
       "victim_salary": 95000,
-      "noise_to_salary_ratio": 10.17608229379152,
+      "noise_to_salary_ratio": 5.281773167740671,
       "protected": true,
       "protection_level": "forte"
     },
-    "1.0": {
-      "clear_sum": 52411535.0,
-      "dp_sum": 52623717.75154257,
-      "noise_on_query": 212182.7515425682,
+    "5": {
+      "clear_sum": 17558674.0,
+      "dp_sum": 17580142.883744836,
+      "noise_on_query": 21468.883744835854,
       "victim_salary": 95000,
-      "noise_to_salary_ratio": 2.2335026478165076,
-      "protected": true,
-      "protection_level": "forte"
+      "noise_to_salary_ratio": 0.22598824994564057,
+      "protected": false,
+      "protection_level": "insufficiente"
     },
-    "2.0": {
-      "clear_sum": 52411535.0,
-      "dp_sum": 52072340.63485885,
-      "noise_on_query": 339194.36514115334,
+    "10": {
+      "clear_sum": 17558674.0,
+      "dp_sum": 17510146.500117064,
+      "noise_on_query": 48527.49988293648,
       "victim_salary": 95000,
-      "noise_to_salary_ratio": 3.5704670014858246,
+      "noise_to_salary_ratio": 0.5108157882414366,
       "protected": true,
-      "protection_level": "forte"
+      "protection_level": "moderata"
+    },
+    "15": {
+      "clear_sum": 17558674.0,
+      "dp_sum": 17547122.87073925,
+      "noise_on_query": 11551.129260748625,
+      "victim_salary": 95000,
+      "noise_to_salary_ratio": 0.12159083432366974,
+      "protected": false,
+      "protection_level": "insufficiente"
     }
   }
 }
