@@ -22,9 +22,6 @@ bash "$SCRIPT_DIR/run_all_epsilons.sh"
 echo "[4/5] Analisi risultati..."
 python3 "$SCRIPT_DIR/03_analyze_results.py"
 
-echo "[5/5] Generazione grafici..."
-python3 "$SCRIPT_DIR/04_generate_plots.py"
-
 echo ""
 echo "=== Esperimento completato ==="
 echo ""
@@ -34,8 +31,5 @@ echo "  - analysis_report.txt       Analisi confronto con/senza DP"
 echo "  - attack_results.json       Risultati JSON attacco"
 echo "  - analysis_data.json        Dati analisi JSON"
 echo ""
-echo "Grafici in experiment/plots/:"
-ls -1 "$EXPERIMENT_DIR/plots/"*.png 2>/dev/null | xargs -n1 basename | sed 's/^/  - /'
-
 
 
