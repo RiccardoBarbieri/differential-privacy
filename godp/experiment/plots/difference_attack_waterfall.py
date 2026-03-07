@@ -70,6 +70,7 @@ for src, dst in [(0, 1), (2, 3)]:
     ax.plot([src + 0.35, dst - 0.35], [y_line, y_line],
             color="gray", ls="--", lw=0.8)
 
+ax.set_ylim(0, 19e6)
 ax.set_ylabel("Somma stipendi (\\$)")
 ax.set_title("Difference attack: isolamento dello stipendio della vittima")
 ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"\\${x / 1e6:.0f}M"))

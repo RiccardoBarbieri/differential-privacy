@@ -51,10 +51,14 @@ eps_range = np.linspace(min(epsilons_available) - 0.5, max(epsilons_available) +
 b_theoretical = 170000 / (0.9 * eps_range)
 ax2 = ax.twinx()
 ax2.plot(np.interp(eps_range, epsilons_available, x), b_theoretical,
-         color="red", ls="--", lw=1.2, label=r"$b = \Delta f / \varepsilon_{\mathrm{agg}}$ (teorico)")
+         color="red", ls="--", lw=1.2, zorder=10,
+         label=r"$b = \Delta f / \varepsilon_{\mathrm{agg}}$ (teorico)")
 ax2.set_ylabel(r"Scala di Laplace $b$")
-ax2.legend(fontsize=7, loc="upper right")
 ax2.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"\\${x / 1e3:.0f}k"))
+ax2.grid(False)
+
+ax.legend(fontsize=8, loc="upper center")
+ax2.legend(fontsize=7, loc="upper right")
 
 fig.tight_layout()
 fig.savefig(SCRIPT_DIR / "noise_vs_epsilon.pdf", bbox_inches="tight")
