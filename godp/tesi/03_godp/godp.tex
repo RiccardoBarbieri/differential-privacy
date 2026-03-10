@@ -28,7 +28,7 @@ La seconda metodologia è stata progettata per contemplare casistiche dove si vu
     \item \texttt{budget}
 \end{itemize}
 
-In aggiunta a questi moduli, l'applicazione fa uso di altri componenti minori: il componente \texttt{cleaning} contiene funzioni per pulire i dati del dataset in input, come ad esempio la capitalizzazione di stringhe per uniformare eventuali valori malformati; il componente \texttt{io}, in combinazione con \texttt{format}, mette a disposizione funzioni utili alla scrittura e formattazione dei dataset generati dalle pipeline di elaborazione dati sfruttando la riflessione per poter gestire una vasta gamma di tipi di dato. Questi moduli minori, in particolare \texttt{io}, espongono metodi che vengono utilizzati per caricare i dataset da elaborare che, nella versione più recente dell'applicazione, devono essere formattati come file CSV.
+In aggiunta a questi moduli, l'applicazione fa uso di altri componenti minori: il componente \texttt{io}, in combinazione con \texttt{format}, mette a disposizione funzioni utili alla scrittura e formattazione dei dataset generati dalle pipeline di elaborazione dati sfruttando la riflessione per poter gestire una vasta gamma di tipi di dato. Questi moduli minori, in particolare \texttt{io}, espongono metodi che vengono utilizzati per caricare i dataset da elaborare che, nella versione più recente dell'applicazione, devono essere formattati come file CSV.
 
 Un altro componente integrale al funzionamento dell'applicazione è \texttt{global\_env}, questo componente dichiara funzioni e variabili globali utili alla condivisione di risorse come il riferimento alla pipeline e oggetti connessi all'elaborazione corrente, predispone inoltre la funzione centrale all'inizializzazione dei parametri globali dell'applicazione.
 Altre risorse sono state dichiarate come globali oltre a quelle in \texttt{global\_env}, questa strategia si è resa necessaria a causa di alcuni specifici dettagli implementativi del framework e del linguaggio utilizzato.
@@ -56,7 +56,7 @@ Le funzioni che implementano le strategie di elaborazione DP condividono la stes
     \item \texttt{bd godp.DpBudget}, struttura dati che contiene il budget DP della pipeline ed espone metodi per ottenere il budget per la specifica operazione.
 \end{itemize}
 
-Queste funzioni condividono anche i passi che compiono per registrare le aggregazioni nella pipeline:
+Queste funzioni condividono anche i passi che compiono per inserire le aggregazioni nella pipeline:
 \begin{enumerate}
     \item creazione di un sotto-scopo per da utilizzare per l'operazione
     \item creazione di una \texttt{PrivatePCollection} (ppcol) a partire dalla \texttt{PCollection} che contiene i dati da elaborare
@@ -99,9 +99,9 @@ func CountColumn(scope beam.Scope, col beam.PCollection, op model.OperationType,
 }
 \end{minted}
 
-
 \subsection{Modulo modello dei dati}
-Questo modulo è responsabile di definire le entità coinvolte nel flusso di dati dell'applicazione, così come un sotto-modulo di utilità dedicato a incapsulare la complessità del caricamento, formattazione e pulizia dei dati.
+
+Questo modulo è responsabile della definizione delle entità coinvolte nel flusso di dati dell'applicazione e include anche un sotto-modulo di utilità dedicato a incapsulare la complessità del caricamento, formattazione e pulizia dei dati.
 
 Le entità principali in questione sono due:
 \begin{itemize}
@@ -110,7 +110,7 @@ Le entità principali in questione sono due:
 \end{itemize}
 Come intuibile dai nomi delle strutture dati, la prima è destinata a contenere le informazioni relative al file YAML specificato dall'utente per la configurazione dell'esecuzione, mentre la seconda adempie al compito di immagazzinare i valori del dataset da elaborare.
 
-Del caricamento della configurazione YAML si occupa il file \texttt{go} \texttt{yaml\_config} che opera leggendo il file specificato da linea di comando e effettua il parsing della struttura YAML. La libreria \texttt{goccy/go-yaml} fornisce un modo semplice per associare una serie di tipi struct innestati ai tag YAML corrispondenti. Utilizzando questa libreria in combinazione \texttt{go-playground/validator} è stato possibile definire appropriate regole di validazione dei valori di configurazione, la libreria associa poi appositi messaggi di errore ben formattati per indicare con precisione all'utente la posizione del campo mal specificato e il motivo dell'errore. Data la carenza di espressività di queste regole, che permettono di intervenire soltanto a livello del singolo campo, è stata definita una funzione che effettua controlli trasversali tra i campi, in particolare viene validato che per certi valori di un campo siano popolati specifici campi e assenti altri.
+Il file \texttt{yaml\_config} implementa metodi che implementano la funzionalità di caricamento della configurazione YAML, che opera leggendo il file specificato da linea di comando ed effettua il parsing della struttura YAML. La libreria \texttt{goccy/go-yaml} fornisce un modo semplice per associare una serie di tipi struct innestati ai tag YAML corrispondenti. Utilizzando questa libreria in combinazione \texttt{go-playground/validator} è stato possibile definire appropriate regole di validazione dei valori di configurazione, la libreria associa poi appositi messaggi di errore ben formattati per indicare con precisione all'utente la posizione del campo mal specificato e il motivo dell'errore. Data la carenza di espressività di queste regole, che permettono di intervenire soltanto a livello del singolo campo, è stata definita una funzione che effettua controlli trasversali tra i campi, in particolare viene validato che per certi valori di un campo siano popolati specifici campi e assenti altri.
 
 Oltre alla definizione dei tipi di dato, il modulo espone una singola funzione che richiede in input il nome di un file e restituisce lo struct di tipo \texttt{YamlConfig} opportunamente compilato.
 
@@ -127,6 +127,7 @@ type PipelineDp struct {
 	Configuration ConfigurationType `yaml:"configuration" validate:"required"`
 	PrivacyBudget PrivacyBudgetType `yaml:"privacy_budget" validate:"required"`
 	Types         []TypeType        `yaml:"types" validate:"required"`
+	Filters       []FilterType      `yaml:"filters"`
 	Operations    []OperationType   `yaml:"operations" validate:"required"`
 }
 
@@ -148,8 +149,8 @@ Questa struttura dati è pensata per immagazzinare un record del dataset in una 
 Le variabili globali citate in precedenza sono definite come segue:
 \begin{itemize}
     \item \mintinline{go}{var Headers []string}: contiene i nomi dei campi del dataset, viene usato per effettuare alcuni controlli di consistenza tra i dati di configurazione inseriti dall'utente e gli effettivi nomi dei campi;
-    \item \mintinline{go}{var TypesMap map[string]string}: questa mappa viene composta a partire dalla configurazione fornita, ha come chiave il nome di un campo e come valore una stringa che ne indica il tipo e
-    \item \mintinline{go}{var IdFieldIndex int}: memorizza l'indice che indica la posizione della colonna scelta come identificatore di privacy dall'utente nel'array \texttt{Headers}.
+    \item \mintinline{go}{var TypesMap map[string]string}: questa mappa è composta a partire dalla configurazione fornita, ha come chiave il nome di un campo e come valore una stringa che indica il tipo e
+    \item \mintinline{go}{var IdFieldIndex int}: memorizza l'indice che indica la posizione della colonna scelta come identificatore di privacy dall'utente nell'array \texttt{Headers}.
 \end{itemize}
 
 Un esempio ideale per motivare la necessità di queste variabili globali è la funzione seguente, della quale si riporta solo la firma per brevità.
@@ -159,6 +160,21 @@ func CreateGenericStruct(line string, emit func(struc ValuesStruct)) error
 \end{minted}
 La funzione \texttt{CreateGenericStruct}, usata in combinazione con l'operazione \texttt{ParDo} di Apache Beam, \textit{emette} uno per volta gli elementi che comporranno la \texttt{PCollection} a partire dalla lettura delle righe del dataset una alla volta; la particolare firma della funzione è richiesta dalla funzione \texttt{ParDo} del framework Apache Beam, che applica la funzione a ogni singola riga del dataset separatamente, rendendo impossibile fornire un contesto alla funzione che crea lo struct per una data riga.
 
+\subsection{Filtri}
+
+Nella definizione della struttura \texttt{PipelineDp} è inclusa la struttura dati \texttt{Filters} come lista di \texttt{FilterType}, nella quale vengono caricate le informazioni sulla configurazione dei filtri da applicare al dataset, composto dal nome dell'attributo coinvolto, dall'operatore applicato e dal suo valore.
+\begin{minted}[breaklines,bgcolor=lightgray,framesep=2mm,baselinestretch=1.2,fontsize=\footnotesize]{go}
+type FilterType struct {
+	Column   string `yaml:"column" validate:"required"`
+	Operator string `yaml:"operator" validate:"required,oneof== != < > <= >="`
+	Value    string `yaml:"value" validate:"required"`
+}
+\end{minted}
+Gli operatori supportati sono uguaglianza, disuguaglianza e confronti di ordine, quando questi sono applicati nella pipeline DP tengono conto del tipo di dati dell'attributo facendo riferimento alla mappa dei tipi inclusa nel documento YAML.
+
+L'applicazione dei filtri al dataset è realizzata tramite la struttura \texttt{FilterFn}, un \texttt{DoFn} di Apache Beam che implementa una logica congiuntiva (AND): quando sono specificati più filtri, un record viene incluso nel risultato soltanto se soddisfa \textit{tutti} i criteri definiti. Questa struttura viene utilizzata dalla funzione \texttt{ApplyFilters} che, ricevendo come parametri lo scope della pipeline, la \texttt{PCollection} contenente i dati, la lista dei filtri e la mappa dei tipi, applica l'operazione \texttt{ParDo} con il \texttt{DoFn} di filtraggio, restituendo una nuova \texttt{PCollection} contenente soltanto i record che soddisfano tutti i criteri. Se non è specificato alcun filtro, la \texttt{PCollection} originale viene restituita senza modifiche.
+
+%--------------------------------------------------------
 \subsection{Modulo composizione pipeline}
 Il modulo \texttt{runs} è responsabile di mettere insieme e orchestrare l'esecuzione degli altri componenti dell'applicazione; le funzioni definite in questo modulo vengono invocate direttamente dal framework \texttt{spf13/cobra} utilizzato per la creazione dell'interfaccia da linea di comando.
 
@@ -177,7 +193,7 @@ La funzione \texttt{RunFromFile} incapsula invece l'orchestrazione nel caso di u
 
 Quando la funzione viene invocata inizia con l'ottenere il parametro CLI che specifica il file di configurazione per poi usarlo per leggere il file di configurazione e caricarlo nelle apposite strutture dati tramite la funzione \texttt{model.LoadYamlConfig}, successivamente utilizza questa configurazione per creare l'oggetto \texttt{DpBudget} per la pipeline corrente, questi due oggetti verranno discussi in dettaglio nelle sezioni successive. La funzione passa poi a interagire con il file che contiene il dataset, estraendo i nomi dei campi e scrivendo una versione temporanea del file con la prima riga rimossa, questa operazione è resa necessaria dal fatto che non è possibile differenziare una riga contenente dati dalla riga contenente i nomi dei campi, non sarebbe quindi possibile caricare correttamente i dati negli struct generici.
 
-Successivamente la funzione aggiunge alla pipeline l'operazione che carica i dati dal file contenente i dati da analizzare, per poi aggiungere alla pipeline le aggregazioni specificate nel file di configurazione in ordine di dichiarazione, così come le operazioni di scrittura e stampa delle \texttt{PCollection} risultanti.
+Successivamente la funzione aggiunge alla pipeline l'operazione che carica i dati dal file contenente i dati da analizzare; se sono stati definiti dei filtri nella nel file di configurazione YAML essi vengono applicati al dataset caricato. Dopo aver ottenuto il dataset filtrato la funzione procede con l'aggiungere alla pipeline le aggregazioni specificate nel file di configurazione in ordine di dichiarazione, così come le operazioni di scrittura e stampa delle \texttt{PCollection} risultanti.
 
 Infine, dopo aver compilato la pipeline nella sua interezza, la funzione invoca il \texttt{DirectRunner} messo a disposizione da Apache Beam che esegue tutte le operazioni associate alla pipeline in precedenza. Questa è la sezione del programma che è necessario modificare nel caso in cui si voglia eseguire la pipeline in un contesto diverso con un Runner specifico per particolari ambienti (e.g. piattaforme cloud).
 
@@ -219,14 +235,15 @@ Sono state implementate altre due funzioni per inizializzare il budget che vengo
 \section{DPYaml - definizione di pipeline DP}
 Per permettere agli utenti di GoDP di definire una pipeline DP è stato definito DPYaml, un formato di specifica in linguaggio YAML che permette a utenti non esperti di creare distribuzioni di dati differenzialmente private tramite la definizione delle operazioni di aggregazione da applicare a un dataset. Di seguito se ne illustrano le caratteristiche e le parti che lo compongono; in appendice si riporta un esempio di un file DPYaml come riferimento (\ref{code:yaml}).
 
-DPYaml si articola in quattro sezioni:
+DPYaml si articola in cinque sezioni:
 \begin{itemize}
     \item configurazione
     \item budget di privacy
     \item tipi di dato
+    \item filtri
     \item operazioni
 \end{itemize}
-Tra questi, le sezioni di configurazione, budget di privacy e operazioni sono indispensabili al funzionamento dell'applicazione. La definizione dei tipi di dato si rende necessaria soltanto nei casi in cui si definiscano delle operazioni che richiedano gestione particolare del tipo di dato da elaborare, come ad esempio un'operazione che calcola la media di un valore aggregato su un campo chiave, al contrario di operazioni come il conteggio di elementi che appartengono a una categoria.
+Tra questi, le sezioni di configurazione, budget di privacy e operazioni sono indispensabili al funzionamento dell'applicazione. La definizione dei tipi di dato si rende necessaria soltanto nei casi in cui si definiscano delle operazioni che richiedano gestione particolare del tipo di dato da elaborare, come ad esempio un'operazione che calcola la media di un valore aggregato su un campo chiave, al contrario di operazioni come il conteggio di elementi che appartengono a una categoria. La sezione dei filtri è opzionale: quando specificata richiede che tutte le colonne coinvolte in uno dei filtri siano anche incluse nella sezione dei tipi.
 
 \subsubsection{Configurazione}
 
@@ -249,6 +266,19 @@ I parametri in questione sono \texttt{delta} ed \texttt{epsilon}; questi valori,
 
 L'ultimo parametro di questa sezione è denotato dal nome \texttt{aggregation\_share} e permette di specificare come suddividere il budget di privacy tra le operazioni di aggregazione e selezione delle partizioni ($1 - \texttt{aggregation\_share}$). In questo modo, è possibile indicare all'applicazione quanta parte del budget di privacy debba essere utilizzata per rendere differenzialmente privata la fase di selezione delle categorie da includere nel risultato (selezione delle partizioni) per evitare eventi distintivi e quanta, invece, debba essere allocata per applicare l'effettiva addizione di rumore al risultato finale (aggregazione).
 
+\subsubsection{Filtri}
+
+Questa sezione opzionale permette di definire una serie di filtri che restringono la porzione del dataset su cui vengono applicate le operazioni DP specificate.
+
+Ogni filtro è caratterizzato da tre parametri:
+\begin{itemize}
+    \item \texttt{column}: il nome dell'attributo sul quale applicare il filtro
+    \item \texttt{operator}: l'operatore di confronto da utilizzare, scelto tra \texttt{=}, \texttt{!=}, \texttt{<}, \texttt{>}, \texttt{<=} e \texttt{>=} e
+    \item \texttt{value}: valore di riferimento
+\end{itemize}
+
+Quando più di un filtro è specificato, questi vengono composti in congiunzione logica, quindi soltanto i record che soddisfano tutti i criteri saranno inclusi nel dataset che verrà usato per le operazioni. Tutte gli attributi coinvolti devono avere il proprio tipo definito nella sezione \texttt{types} per permettere all'applicazione di valutare correttamente i confronti.
+
 \subsubsection{Operazioni}
 
 La sezione \texttt{operations} costituisce il nucleo operativo di DPYaml, in quanto permette di definire in modo dichiarativo la sequenza di trasformazioni DP che saranno applicate al dataset di input. Ogni elemento di questa sezione descrive un'operazione di aggregazione DP che andrà a consumare parte del budget di privacy specificato nella sezione \texttt{privacy\_budget}, specificandone il tipo, i parametri di privacy e i campi del dataset coinvolti. Questo insieme di operazioni è utilizzato da GoDP per configurare la pipeline DP, nella quale ciascuna operazione contribuisce in modo esplicito alla perdita complessiva di privacy.
@@ -256,6 +286,8 @@ La sezione \texttt{operations} costituisce il nucleo operativo di DPYaml, in qua
 Ogni operazione è identificata da un nome univoco, specificato tramite il sotto-parametro \texttt{name}, che viene utilizzato sia per nominare i file di output contenenti i risultati delle operazioni, sia per scopi di tracciamento interno (e.g. porzione del budget, debug).
 
 Il campo \texttt{type} specifica la tipologia di aggregazione da eseguire, scelta tra \texttt{count}, \texttt{sum} e \texttt{mean}, determinando quale funzione del modulo \texttt{aggregations} venga invocata; il campo \texttt{column} indica il nome dell'attributo del dataset al quale applicare il tipo di operazione specificato.
+
+Il campo \texttt{importance} specifica un peso numerico che determina la porzione di budget di privacy allocata per ciascuna operazione. Il modulo \texttt{budget} utilizza questo valore per suddividere i parametri $\varepsilon$ e $\delta$ in modo proporzionale. Per ogni operazione viene assegnata una quota di budget calcolata come il rapporto tra il valore di \texttt{importance} dell'operazione e la somma del valore di \texttt{importance} di tutte le operazioni. In questo modo, operazioni con importanza elevata ricevono una quota maggiore del budget di privacy, risultando in un'aggregazione con una quantità di rumore minore, e quindi un risultato più preciso, a scapito delle altre operazioni.
 
 Un aspetto centrale della sezione \texttt{operations} è la possibilità di definire parametri di privacy specifici per ogni tipo di aggregazione delle operazioni aggiunte alla pipeline. Compilando la sezione \texttt{privacy\_params} con appositi valori specifici per ogni tipo di operazione, è possibile calibrare la quantità di rumore aggiunto ai risultati delle operazioni. I parametri in questione descrivono proprietà intrinseche rilevanti del dataset utilizzato. Segue una descrizione dei parametri e di come essi influenzino la quantità di rumore aggiunto ai risultati e, di conseguenza, il livello di compromesso tra perdita di privacy e utilità dei dati.
 
@@ -277,7 +309,3 @@ Le operazioni \texttt{mean\_per\_key} e \texttt{sum\_per\_key} richiedono il par
 La scelta di questi parametri comporta un compromesso fondamentale: l'aumento dei valori di questi parametri di privacy (o all'aumentare della dimensione dell'intervallo nel caso di \texttt{min\_value} e \texttt{max\_value}), corrisponde una diminuzione della perdita di informazione, dato che una minore porzione dei dati verrebbe ignorata o distorta, ma anche una quantità maggiore di rumore aggiunta ai risultati.
 
 I parametri di privacy influenzano la quantità di rumore aggiunto in quanto modificano i valori effettivi degli attributi utilizzati dall'operazione DP, modificando quindi la sensitività della funzione applicata al dataset con conseguente aumento o diminuzione del rumore aggiunto (\ref{expr:laplace-sensitivity}).
-
-%________________________________________________________________
-% REMOVE CLEANING?
-% AGGIUGNI DESCRIZIONE CAMPO IMPORTANCE
