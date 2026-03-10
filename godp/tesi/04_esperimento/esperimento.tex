@@ -4,7 +4,7 @@ In questo capitolo si procede ad illustrare un caso di utilizzo di GoDP con l'ob
 
 \section{Threat model}
 
-L'esperimento si basa sul modello di privacy differenziale \textit{centralizzato}, nel quale un \textit{curatore} fidato ha accesso al database in chiaro e agisce come intermediario tra la sorgente dei dati e gli analisti che desiderano effettuare query aggregate sul dataset. Il curatore riceve le richieste di aggregazione, applica un meccanismo DOP opportunamente calibrato e restituisce il risultato protetto dalle garanzie della privacy differenziale.
+L'esperimento si basa sul modello di privacy differenziale \textit{centralizzato}, nel quale un \textit{curatore} fidato ha accesso al database in chiaro e agisce come intermediario tra la sorgente dei dati e gli analisti che desiderano effettuare query aggregate sul dataset. Il curatore riceve le richieste di aggregazione, applica un meccanismo DP opportunamente calibrato e restituisce il risultato protetto dalle garanzie della privacy differenziale.
 
 Nel contesto di questo modello di applicazione della DP, si identificano quattro attori principali:
 \begin{itemize}
@@ -40,7 +40,7 @@ Il threat model si basa su alcune assunzioni fondamentali:
 
 Il \textit{difference attack} è una tecnica di de-anonimizzazione che permette a un attaccante di dedurre informazioni sensibili su un singolo individuo combinando i risultati di più query aggregate. L'attacco sfrutta il fatto che le aggregazioni esatte permettono di isolare il contributo di un individuo specifico attraverso sottrazioni successive. \cite{TCS-042}
 
-Sia $D$ un dataset a $f$ una funzione di aggregazione (e.g. somma, conteggio, media...); l'attaccante identifica due sottoinsiemi:
+Sia $D$ un dataset e $f$ una funzione di aggregazione (e.g. somma, conteggio, media...); l'attaccante identifica due sottoinsiemi:
 \begin{itemize}
     \item $D_{\text{include}}$, che include la vittima target e
     \item $D_{\text{exclude}}$, lo stesso sottoinsieme senza la vittima
@@ -53,7 +53,7 @@ Il valore associato alla vittima può essere calcolato come:
     \label{eq:differencing_attack}
 \end{equation}
 
-A scopo di illustrare l'efficacia del difference attack, si considera un sistema che sfrutta una tecnica di protezione basata su una \textit{soglia minima di aggregazione}, questo metodo impone che il sistema rifiuti di restituire qualsiasi risultato quando il numero di record che soddisfa i criteri della query è inferiore a una costante $k$. Questo meccanismo, noto come \textit{suppression threshold}, è ampiamente utilizzato in sistemi statistici reali come protezione contro la re-identificazione \cite{kThreshold}.
+Allo scopo di illustrare l'efficacia del difference attack, si considera un sistema che sfrutta una tecnica di protezione basata su una \textit{soglia minima di aggregazione}, questo metodo impone che il sistema rifiuti di restituire qualsiasi risultato quando il numero di record che soddisfa i criteri della query è inferiore a una costante $k$. Questo meccanismo, noto come \textit{suppression threshold}, è ampiamente utilizzato in sistemi statistici reali come protezione contro la re-identificazione \cite{kThreshold}.
 
 In presenza di tale meccanismo, una query che filtra per tutti gli attributi noti della vittima verrebbe rifiutata dal sistema, in quanto restituirebbe un singolo record ($1 < k$). L'attaccante è quindi costretto a ricorrere al difference attack: interrogando il sistema con query che coinvolgono gruppi sufficientemente numerosi da superare la soglia $k$, e calcolando differenze tra i risultati, può aggirare la protezione e isolare il contributo della vittima. Questo scenario dimostra come la soglia minima di aggregazione, pur offrendo un certo livello di protezione, sia vulnerabile ad attacchi che sfruttano conoscenze ausiliarie sui membri del dataset. Per gli scopi di questo esperimento si utilizzerà una costante $k = 5$ ($~ 1\%$ dataset).
 
@@ -134,7 +134,7 @@ Per eseguire il difference attack attraverso GoDP, ciascuna delle tre query dell
 
 Per ogni valore di $\varepsilon$, sono state generate tre configurazioni distinte, una per ciascuna query $S_1$, $S_2$, $S_3$, per un totale di 12 esecuzioni ($4$ valori di $\varepsilon \times 3$ query).
 
-L'operazione di aggregazione utilizzata (\texttt{sum\_per\_key}) calcola la somma degli stipendi per reparto. I parametri di configurazione specificano che ogni dipendente appartiene a un solo reparto e contribuisce (\texttt{max\_categories\_contributed: 1}) e contribuisce una sola volta (\texttt{max\_contributions\_per\_category: 1}), con valori di stipendio compresi tra \$30,000 e \$200,000.
+L'operazione di aggregazione utilizzata (\texttt{sum\_per\_key}) calcola la somma degli stipendi per reparto. I parametri di configurazione specificano che ogni dipendente appartiene a un solo reparto e contribuisce a una sola categoria (\texttt{max\_categories\_contributed: 1}) e una sola volta (\texttt{max\_contributions\_per\_category: 1}), con valori di stipendio compresi tra \$30,000 e \$200,000.
 
 La sensitività globale dell'operazione di somma è determinata dall'intervallo dei possibili valori:
 \begin{equation}
@@ -164,7 +164,7 @@ Applicando il calcolo \eqref{eq:inferred_salary}:
     \text{Stipendio}_{\text{vittima}} = (S_1 - S_2) - S_3 = (17{,}558{,}674 - 9{,}568{,}613) - 7{,}895{,}061 = \$95{,}000
 \end{equation}
 
-L'attaccante riesce a dedurre lo stipendio esatto della vittima, pari al valore reale \$95,000; questo mostra come il sistema protetto solamente tramite la soppressione di query che restituiscono un numero di risultati inferiore a una soglia $k$.
+L'attaccante riesce a dedurre lo stipendio esatto della vittima, pari al valore reale \$95,000; questo mostra come il sistema, protetto solamente tramite la soppressione di query che restituiscono un numero di risultati inferiore a una soglia $k$, sia vulnerabile a questo tipo di attacco.
 
 \subsection{Attacco con protezione DP}
 
@@ -193,17 +193,17 @@ Si ripete lo stesso attacco attraverso GoDP, che applica il meccanismo di Laplac
 
 \subsubsection{$\varepsilon = 0.5$: rimozione della partizione}
 
-Per $\varepsilon = 0.5$ il meccanismo di partition selection rimuove completamente le partizione delle query $S_2$ e $S_3$: i risultati di queste query non vengono restituiti dal sistema. In questo caso il budet $\varepsilon$ destinato alla partition selection ($0.1 \times 0.5 = 0.05$) è insufficiente a mantenere le partizioni che contengono un numero ridotto di record, impedendo del tutto il calcolo delle differenze necessarie all'attacco.
+Per $\varepsilon = 0.5$ il meccanismo di partition selection rimuove completamente le partizioni delle query $S_2$ e $S_3$: i risultati di queste query non vengono restituiti dal sistema. In questo caso il budget $\varepsilon$ destinato alla partition selection ($0.1 \times 0.5 = 0.05$) è insufficiente a mantenere le partizioni che contengono un numero ridotto di record, impedendo del tutto il calcolo delle differenze necessarie all'attacco.
 
 Questo risultato evidenzia come la selezione delle partizioni agisca come un ulteriore livello di protezione, infatti per valori molto bassi di $\varepsilon$ il meccanismo non si limita ad aggiungere rumore alle aggregazioni, ma impedisce la pubblicazione dei risultati di query che coinvolgono gruppi di dimensione ridotta. L'attaccante non è in grado di eseguire il differencing attack in quanto non dispone dei dati necessari al calcolo. Questo fenomeno è coerente con le garanzie teoriche della DP: una $\varepsilon$ molto stringente può portare a una perdita completa di utilità dei dati.
 
 \subsubsection{$\varepsilon = 5$: protezione moderata}
 
-Per $\varepsilon = 5$ tutte le query restituiscono risultati ma il rumore compost attraverso le sottrazioni successive porta l'attaccante ad inferire uno stipendio \$44,350, risultato che esibisce un errore del 53.3\% rispetto allo stipendio reale della vittima. La composizione del rumore è un effetto fondamentale, dato che lo stipendio è calcolato come $(S_1 - S_2) - S_3$, il rumore delle tre query viene sommato.
+Per $\varepsilon = 5$ tutte le query restituiscono risultati, ma il rumore composto attraverso le sottrazioni successive porta l'attaccante a inferire uno stipendio di \$44,350, risultato che esibisce un errore del 53.3\% rispetto allo stipendio reale della vittima. La composizione del rumore è un effetto fondamentale, dato che lo stipendio è calcolato come $(S_1 - S_2) - S_3$, il rumore delle tre query viene sommato.
 
 \subsubsection{$\varepsilon = 10$ e $\varepsilon = 15$: protezione ridotta}
 
-Per $\varepsilon = 10$ l'attaccate omferosce im vaòpre do \$90,308 con un errore del 4.9\% ; per $\varepsilon = 15$ il valore inferito è di circa \$115,850 con un errore del 21.9\%. In entrambi i casi il rumore aggiunto alle singole query è ridotto rispetto al caso precedente.
+Per $\varepsilon = 10$ l'attaccante inferisce un valore di \$90,308 con un errore del 4.9\%; per $\varepsilon = 15$ il valore inferito è di circa \$115,850 con un errore del 21.9\%. In entrambi i casi il rumore aggiunto alle singole query è ridotto rispetto al caso precedente.
 
 L'errore finale dipende dalla composizione algebrica delle quantità di rumore, questa caratteristica può portare sia a sovrastime che sottostime del valore reale.
 
@@ -220,7 +220,7 @@ Questi valori di $\varepsilon$ offrono una protezione limitata, lo stipendio inf
 
 Il rumore aggiunto dal meccanismo di Laplace a ciascuna query è determinato dal parametro di scala $b = \Delta f / \varepsilon_{\text{agg}}$ (equazione \eqref{eq:laplace_scale}).
 
-La tabella \ref{tab:abs_noise} riporta il rumore assoluto misurato su ciascuna query per i valori di $\varepsilon$ per i queli tutte le query restituiscono un risultato.
+La tabella \ref{tab:abs_noise} riporta il rumore assoluto misurato su ciascuna query per i valori di $\varepsilon$ per i quali tutte le query restituiscono un risultato.
 
 \begin{table}[H]
     \centering
@@ -233,7 +233,7 @@ La tabella \ref{tab:abs_noise} riporta il rumore assoluto misurato su ciascuna q
         $\varepsilon = 15$ & \$12{,}593 & \$12{,}394 & \$12{,}485 & \$4{,}029 \\
         \hline
     \end{tabular}
-    \caption{Rumore assoluto (\$) aggiunto alle singoli query dal meccanismo di Laplace.}
+    \caption{Rumore assoluto (\$) aggiunto alle singole query dal meccanismo di Laplace.}
     \label{tab:abs_noise}
 \end{table}
 
@@ -255,7 +255,7 @@ Un aspetto critico dell'attacco è la composizione del rumore attraverso le oper
     \label{{eq:noise_comp}}
 \end{equation}
 
-Poiché le variabili $\eta_i$ sono indipendenti e distribuite secondo $\text{Lap}(0, b)$, la varianze del rumore composto è:
+Poiché le variabili $\eta_i$ sono indipendenti e distribuite secondo $\text{Lap}(0, b)$, la varianza del rumore composto è:
 \begin{equation}
     \text{Var}(\eta_{\text{tot}}) = 3 \cdot \text{Var}(\eta_i) = 3 \cdot 2b^2 = 6b^2
     \label{eq:noise_variance}
@@ -267,11 +267,11 @@ Questo significa che la deviazione standard del rumore composto è $\sigma_{\tex
 
 I risultati sperimentali illustrano il trade-off fondamentale tra privacy e utilità che caratterizza la privacy differenziale.
 
-L'esperimento mostra un comportamento coerente con le proprietà teoriche della DP, al diminuire di $\varepsilon$, la protezione contro l'attacco di de-anonimizzazione aumenta. Per $\varepsilon = 0.5$ l'attacco è neutralizzato dalla rimozione delle partizioni, insieme all'utilità stessa dei dati. Per $\varepsilon = 5$ il rumore composto rende l'inferenza inaffidabile con error del 53.3\%; per valori più elevati di $\varepsilon$ ($10$, $15$) la protezione è mantenuta in quanto l'attaccante non riesce a dedurre lo stipendio esatto ma i dati mantengono un certo livello di utilità.
+L'esperimento mostra un comportamento coerente con le proprietà teoriche della DP, al diminuire di $\varepsilon$, la protezione contro l'attacco di de-anonimizzazione aumenta. Per $\varepsilon = 0.5$ l'attacco è neutralizzato dalla rimozione delle partizioni, insieme all'utilità stessa dei dati. Per $\varepsilon = 5$ il rumore composto rende l'inferenza inaffidabile con errore del 53.3\%; per valori più elevati di $\varepsilon$ ($10$, $15$) la protezione è mantenuta in quanto l'attaccante non riesce a dedurre lo stipendio esatto ma i dati mantengono un certo livello di utilità.
 
 \subsection{Selezione della partizione}
 
-I risultati evidenziano il ruolo della partition selection come componente di protezione complementare al rumore; il budget allocato alla partition selection (10\% del totale) sottrae al budget di privacy, aumentando la quantità di rumore aggiunta alle aggregazioni, ed agisce come filtro che esclude dalla pubblicazione le aggregazioni su gruppi di dimensione ridotta. Nel caso con $\varepsilon = 0.5$ questo meccanismo costituisce il fattore principale del fallimento del differencing attack: le query $S_2$ e $S_3$, che filtrano per attributi specifici e producono gruppi molto ridotti, vengono rimosse dal meccanismo prima ancora che agisca il meccanismo di addizione del rumore.
+I risultati evidenziano il ruolo della partition selection come componente di protezione complementare al rumore; il budget allocato alla partition selection (10\% del totale) sottrae budget alla privacy, aumentando la quantità di rumore aggiunta alle aggregazioni, ed agisce come filtro che esclude dalla pubblicazione le aggregazioni su gruppi di dimensione ridotta. Nel caso con $\varepsilon = 0.5$ questo meccanismo costituisce il fattore principale del fallimento del differencing attack: le query $S_2$ e $S_3$, che filtrano per attributi specifici e producono gruppi molto ridotti, vengono rimosse dal meccanismo prima ancora che agisca il meccanismo di addizione del rumore.
 
 \subsection{Limitazioni dell'esperimento}
 

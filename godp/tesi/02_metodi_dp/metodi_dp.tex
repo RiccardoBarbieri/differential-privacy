@@ -22,7 +22,7 @@ Considerando che i due database $D_1$ e $D_2$ differiscono per un solo individuo
 \subsubsection{Un esempio pratico}
 \label{ex:coint_toss}
 Si supponga di volere condurre un sondaggio su una popolazione ponendo la domanda: "Nell'ultimo anno hai guidato un veicolo sotto l'influenza di alcol o stupefacenti?".
-Ovviamente, una persona alla quale viene posta direttamente questa domanda tenderà a mentire allo scopo di proteggere la propria privacy e evitare di auto incriminarsi. In questa istanza può rendersi utile l'applicazione di un meccanismo differenzialmente privato.
+Ovviamente, una persona alla quale viene posta direttamente questa domanda tenderà a mentire allo scopo di proteggere la propria privacy ed evitare di autoincriminarsi. In questa istanza può rendersi utile l'applicazione di un meccanismo differenzialmente privato.
 
 Per ovviare a questa limitazione del processo di raccolta dati, si richiede ai partecipanti di lanciare una moneta senza mostrare il risultato:
 \begin{itemize}
@@ -71,7 +71,7 @@ Considerati questi risultati si può affermare che il meccanismo illustrato è $
     \frac{\Pr[\mathcal{M}(Si) = Si]}{\Pr[\mathcal{M}(Si) = No]} &\le 3 = \frac{\Pr[\mathcal{M}(No) = No]}{\Pr[\mathcal{M}(No) = Si]}
 \end{align*}
 
-Il meccanismo illustrato dimostra in termini semplici come la privacy differenziale possa agire sui dati per proteggere la privacy dei partecipanti che aderiscono a essere inseriti in una raccolta di dati. Come specificato in precedenza, questo processo garantisce negazione plausibile sul contenuto della risposta ai soggetti partecipanti; non fornisce tuttavia la possibilità di negare di aver partecipato al sondaggio. Al contrario, la privacy differenziale è applicabile solamente a distribuzioni di dati basate su sistemi di interrogazione che generano risultati aggregati.
+Il meccanismo illustrato dimostra in termini semplici come la privacy differenziale possa agire sui dati per proteggere la privacy dei partecipanti che aderiscono a essere inseriti in una raccolta di dati. Come specificato in precedenza, questo processo garantisce negazione plausibile sul contenuto della risposta ai soggetti partecipanti; non fornisce tuttavia la possibilità di negare di aver partecipato al sondaggio. Al contrario, la privacy differenziale è applicabile soltanto a distribuzioni di dati basate su sistemi di interrogazione che generano risultati aggregati.
 
 \subsection{Quantificazione della conoscenza dell'attaccante}
 Il parametro $\varepsilon$ presente nella definizione di $\varepsilon$-DP può essere interpretato come una misura del livello massimo di conoscenza che un potenziale attaccante può guadagnare osservando i risultati di un'interrogazione del meccanismo differenzialmente privato.
@@ -166,7 +166,7 @@ rispetta $\varepsilon$-privacy differenziale consultare \ref{proof:laplace_mecha
 \subsection{Meccanismo di Laplace e singole statistiche}
 Si supponga di avere a disposizione un dataset che raccoglie le lamentele poste dai clienti di un'azienda tramite un modulo di feedback, e di voler creare un report sul numero di lamentele poste al giorno; si decide di applicare il meccanismo di Laplace che aggiunge rumore calibrato per anonimizzare i risultati dell'analisi.
 
-Il primo passo per creare un meccanismo di Laplace differenzialmente privato è calcolare la sensitività della funzione in considerazione. Dato che si tratta di un'operazione di conteggio, intuitivamente si può pensare che questo valore sia pari a 1; tuttavia è necessario considerare la \textit{contribuzione massima} che un singolo utente può apportare al conteggio per valut-are correttamente casi in cui un individuo presenta più di una lamentela al giorno.
+Il primo passo per creare un meccanismo di Laplace differenzialmente privato è calcolare la sensitività della funzione in considerazione. Dato che si tratta di un'operazione di conteggio, intuitivamente si può pensare che questo valore sia pari a 1; tuttavia è necessario considerare la \textit{contribuzione massima} che un singolo utente può apportare al conteggio per valutare correttamente casi in cui un individuo presenta più di una lamentela al giorno.
 
 Se si considerasse $\Delta f = 1$ e quindi un parametro di scala per la distribuzione di Laplace pari a $b = \frac{1}{\varepsilon}$ si otterrebbe un meccanismo $x\varepsilon$-differenzialmente privato, dove $x$ corrisponde alla massima contribuzione che un singolo individuo può apportare al dataset. Supponendo un dataset di 500 unità con un utente che ha posto 5 lamentele, utilizzando $\Delta f = 1$ si otterrebbero due distribuzioni di probabilità con rapporto massimo di $e^{5\varepsilon}$, violando quindi la definizione di privacy differenziale.
 
@@ -382,6 +382,6 @@ Confrontando questa distribuzione con la distribuzione di Laplace si nota che le
     \label{plot:normalized_inv_plrv}
 \end{figure}
 
-Mentre il meccanismo di Laplace è particolarmente adatto al rilasci di un numero limitato di statistiche, poiché garantisce $\varepsilon$-DP, il meccanismo gaussiano risulta più appropriato quando si necessita di rilasciare un numero elevato di statistiche, in quanto soddisfa una forma rilassata di privacy differenziale, ovvero $(\varepsilon,\delta)$-DP,  e presenta migliori proprietà di composizione.
+Mentre il meccanismo di Laplace è particolarmente adatto al rilascio di un numero limitato di statistiche, poiché garantisce $\varepsilon$-DP, il meccanismo gaussiano risulta più appropriato quando si necessita di rilasciare un numero elevato di statistiche, in quanto soddisfa una forma rilassata di privacy differenziale, ovvero $(\varepsilon,\delta)$-DP,  e presenta migliori proprietà di composizione.
 
-Tuttavia, per garantire lo stesso livello di protezione della privacy, il meccanismo gaussiano richiede in genere l'aggiunta di una quantità di rumore maggiore rispetto al meccanismo di Laplace. In dataset di dimensione contenute tale rumore può avere un impatto significativo sul risultato dell'aggregazione, riducendo sensibilmente l'utilità dei dati.
+Tuttavia, per garantire lo stesso livello di protezione della privacy, il meccanismo gaussiano richiede in genere l'aggiunta di una quantità di rumore maggiore rispetto al meccanismo di Laplace. In dataset di dimensione contenuta tale rumore può avere un impatto significativo sul risultato dell'aggregazione, riducendo sensibilmente l'utilità dei dati.

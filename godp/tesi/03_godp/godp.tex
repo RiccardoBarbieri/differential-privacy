@@ -33,14 +33,14 @@ In aggiunta a questi moduli, l'applicazione fa uso di altri componenti minori: i
 Un altro componente integrale al funzionamento dell'applicazione è \texttt{global\_env}, questo componente dichiara funzioni e variabili globali utili alla condivisione di risorse come il riferimento alla pipeline e oggetti connessi all'elaborazione corrente, predispone inoltre la funzione centrale all'inizializzazione dei parametri globali dell'applicazione.
 Altre risorse sono state dichiarate come globali oltre a quelle in \texttt{global\_env}, questa strategia si è resa necessaria a causa di alcuni specifici dettagli implementativi del framework e del linguaggio utilizzato.
 
-Un ulteriore modulo di complessità minore è \texttt{commands}, questo componente sfrutta la libreria Go \texttt{spf13/cobra} per creare la struttura dei comandi dell'interfaccia da linea di comando, definendone i metodi di utilizzo e i parametri supportati e richiesti. Le inizializzazioni di apposite strutture dati associano a ogni comando la funzione che deve essere lanciata quando il comando viene invocato, così come stringhe che ne descrivono l'utilizzo e forniscono esempi. Le funzioni in questione sono parte del modulo \texttt{runs} che verrà descritto in seguito.
+Un ulteriore modulo di complessità minore è \texttt{commands}, questo componente sfrutta la libreria Go \texttt{spf13/cobra} per creare la struttura dei comandi dell'interfaccia da linea di comando, definendone i metodi di utilizzo e i parametri supportati e richiesti. Le inizializzazioni di apposite strutture dati associano a ogni comando la funzione che deve essere lanciata quando il comando viene invocato, così come stringhe che ne descrivono l'utilizzo e forniscono esempi. Le funzioni in questione fanno parte del modulo \texttt{runs} che verrà descritto in seguito.
 
 \subsection{Modulo aggregazioni}
 Il modulo \texttt{aggregations} è il componente principale dell'applicazione, al suo interno sono contenute le implementazioni delle trasformazioni differenzialmente private che \texttt{GoDP} supporta. In questo modulo sono implementate sia le operazioni differenzialmente private \textit{generiche} sia quelle \textit{specializzate}; di seguito si discuterà la differenza tra le due.
 
 Per operazione specializzata si intende una trasformazione che non è possibile specificare tramite il formato di configurazione \texttt{DPYaml}; un esempio di operazione di questo tipo è una qualsiasi trasformazione che richiede di utilizzare valori composti o post-processati da campi del dataset.
 
-Per descrivere al meglio il funzionamento delle funzioni di elaborazione dati, è necessario introdurre alcuni concetti alla base di Apache Beam:
+Per descrivere al meglio il funzionamento delle funzioni di elaborazione dati è necessario introdurre alcuni concetti alla base di Apache Beam:
 \begin{itemize}
     \item \texttt{Pipeline}: centro dell'operatività di Apache Beam, una pipeline è un grafo che contiene le operazioni definite dal programmatore;
     \item \texttt{PCollection}: contiene i dati da processare nella pipeline, può essere un dataset finito oppure uno stream di dati che viene rifornito in modo continuo;
@@ -58,7 +58,7 @@ Le funzioni che implementano le strategie di elaborazione DP condividono la stes
 
 Queste funzioni condividono anche i passi che compiono per inserire le aggregazioni nella pipeline:
 \begin{enumerate}
-    \item creazione di un sotto-scopo per da utilizzare per l'operazione
+    \item creazione di un sotto-scopo da utilizzare per l'operazione
     \item creazione di una \texttt{PrivatePCollection} (ppcol) a partire dalla \texttt{PCollection} che contiene i dati da elaborare
     \item applicazione di una funzione a ogni elemento della \texttt{ppcol} per estrarre i dati di interesse, si genera una nuova \texttt{PrivatePCollection}
     \item applicazione della trasformazione DP configurata con i parametri appropriati
@@ -66,7 +66,7 @@ Queste funzioni condividono anche i passi che compiono per inserire le aggregazi
 
 Le \texttt{PCollection} supportano l'applicazione di trasformazioni arbitrarie ai dati che contengono, tuttavia per applicare trasformazioni differenzialmente private a questa struttura dati è necessario trasformarla in una \texttt{PrivatePCollection}, una struttura dati esposta da Privacy on Beam che associa ogni elemento di una \texttt{PCollection} a un \textit{identificatore di privacy}. La scelta dell'identificatore determina le \textit{unità di privacy} che saranno sotto la garanzia di $(\varepsilon, \delta)$-DP, in particolare i risultati delle aggregazioni effettuate su una determinata \texttt{PrivatePCollection} saranno $(\varepsilon, \delta)$-indistinguibili dal risultato ottenuto dall'applicazione delle aggregazioni sulla stessa \texttt{PrivatePCollection} dalla quale sono stati rimossi tutti i record associati a un determinato identificatore.
 
-Per creare una \texttt{PrivatePCollection} Privacy on Beam espone metodi appositi da utilizzare in funzione del tipo di dato contenuto nella \texttt{PCollection}, quello utilizzato da questa applicazione è il metodo \texttt{pbeam.MakePrivateFromStruct} che accetta in input una \texttt{PCollection} di struct e il nome del campo dello struct che contiene l'identificatore di privacy. \texttt{GoDP} è stato progettato per poter accomodare dataset arbitrari, questo tuttavia si è rivelato un problema in fase di progettazione; inizialmente l'approccio utilizzato è stato quello di sfruttare la riflessione di Golang per creare a runtime un'entità struct dinamica che contenesse i campi presenti del dataset CSV, applicando questa metodologia Privacy on Beam è emerso che il framework non supporta tipi generici nella generazione di \texttt{PrivatePCollection}, la motivazione per questa limitazione risiede nel fatto che il framework non è in grado di inferire adeguatamente struct di dati arbitrariamente complessi a fronte della necessità di serializzare questa struttura.
+Per creare una \texttt{PrivatePCollection} Privacy on Beam espone metodi appositi da utilizzare in funzione del tipo di dato contenuto nella \texttt{PCollection}, quello utilizzato da questa applicazione è il metodo \texttt{pbeam.MakePrivateFromStruct} che accetta in input una \texttt{PCollection} di struct e il nome del campo dello struct che contiene l'identificatore di privacy. \texttt{GoDP} è stato progettato per poter accomodare dataset arbitrari, questo tuttavia si è rivelato un problema in fase di progettazione; inizialmente l'approccio utilizzato è stato quello di sfruttare la riflessione di Golang per creare a runtime un'entità struct dinamica che contenesse i campi presenti nel dataset CSV, applicando questa metodologia Privacy on Beam è emerso che il framework non supporta tipi generici nella generazione di \texttt{PrivatePCollection}, la motivazione per questa limitazione risiede nel fatto che il framework non è in grado di inferire adeguatamente struct di dati arbitrariamente complessi a fronte della necessità di serializzare questa struttura.
 
 Per far fronte a questo problema si è scelto di utilizzare un tipo di dato struct custom \texttt{ValuesStruct}, la scelta della struttura verrà discussa in seguito nella sezione sul modulo \texttt{model}.
 
@@ -182,7 +182,7 @@ Come per le funzioni nel modulo \texttt{aggregations}, anche in \texttt{runs} fi
 
 Le funzioni specializzate sono quelle funzioni \textit{run} che creano una pipeline a partire da un dataset CSV, una lista di operazioni predisposte e scrivono sul file di output prendendo i valori necessari alla configurazione direttamente dai parametri da linea di comando, è inoltre fondamentale che le operazioni siano state definite in precedenza dall'utente. Di seguito si riportano le azioni che queste funzioni eseguono:
 \begin{enumerate}
-    \item \texttt{InitEnvironment}: funzione invocata prima di ogni run specializzata; qui viene configurata la pipeline, aggiunta alla a quest'ultima l'operazione di caricamento del dataset e raccolti i valori dei parametri da CLI;
+    \item \texttt{InitEnvironment}: funzione invocata prima di ogni run specializzata; qui viene configurata la pipeline, aggiunta a quest'ultima l'operazione di caricamento del dataset e raccolti i valori dei parametri da CLI;
     \item inizializza il budget DP a seconda della operazioni richieste creando un oggetto \texttt{DpBudget} condiviso;
     \item aggiunge alla pipeline le operazioni necessarie per eseguire le aggregazioni specificate chiamando le apposite funzioni dal modulo \texttt{aggregations}
     \item esegue la pipeline con l'appropriato \texttt{Runner}
@@ -193,7 +193,7 @@ La funzione \texttt{RunFromFile} incapsula invece l'orchestrazione nel caso di u
 
 Quando la funzione viene invocata inizia con l'ottenere il parametro CLI che specifica il file di configurazione per poi usarlo per leggere il file di configurazione e caricarlo nelle apposite strutture dati tramite la funzione \texttt{model.LoadYamlConfig}, successivamente utilizza questa configurazione per creare l'oggetto \texttt{DpBudget} per la pipeline corrente, questi due oggetti verranno discussi in dettaglio nelle sezioni successive. La funzione passa poi a interagire con il file che contiene il dataset, estraendo i nomi dei campi e scrivendo una versione temporanea del file con la prima riga rimossa, questa operazione è resa necessaria dal fatto che non è possibile differenziare una riga contenente dati dalla riga contenente i nomi dei campi, non sarebbe quindi possibile caricare correttamente i dati negli struct generici.
 
-Successivamente la funzione aggiunge alla pipeline l'operazione che carica i dati dal file contenente i dati da analizzare; se sono stati definiti dei filtri nella nel file di configurazione YAML essi vengono applicati al dataset caricato. Dopo aver ottenuto il dataset filtrato la funzione procede con l'aggiungere alla pipeline le aggregazioni specificate nel file di configurazione in ordine di dichiarazione, così come le operazioni di scrittura e stampa delle \texttt{PCollection} risultanti.
+Successivamente la funzione aggiunge alla pipeline l'operazione che carica i dati dal file contenente i dati da analizzare; se sono stati definiti dei filtri nel file di configurazione YAML essi vengono applicati al dataset caricato. Dopo aver ottenuto il dataset filtrato la funzione procede con l'aggiungere alla pipeline le aggregazioni specificate nel file di configurazione in ordine di dichiarazione, così come le operazioni di scrittura e stampa delle \texttt{PCollection} risultanti.
 
 Infine, dopo aver compilato la pipeline nella sua interezza, la funzione invoca il \texttt{DirectRunner} messo a disposizione da Apache Beam che esegue tutte le operazioni associate alla pipeline in precedenza. Questa è la sezione del programma che è necessario modificare nel caso in cui si voglia eseguire la pipeline in un contesto diverso con un Runner specifico per particolari ambienti (e.g. piattaforme cloud).
 
@@ -277,7 +277,7 @@ Ogni filtro è caratterizzato da tre parametri:
     \item \texttt{value}: valore di riferimento
 \end{itemize}
 
-Quando più di un filtro è specificato, questi vengono composti in congiunzione logica, quindi soltanto i record che soddisfano tutti i criteri saranno inclusi nel dataset che verrà usato per le operazioni. Tutte gli attributi coinvolti devono avere il proprio tipo definito nella sezione \texttt{types} per permettere all'applicazione di valutare correttamente i confronti.
+Quando più di un filtro è specificato, questi vengono composti in congiunzione logica, quindi soltanto i record che soddisfano tutti i criteri saranno inclusi nel dataset che verrà usato per le operazioni. Tutti gli attributi coinvolti devono avere il proprio tipo definito nella sezione \texttt{types} per permettere all'applicazione di valutare correttamente i confronti.
 
 \subsubsection{Operazioni}
 
@@ -302,7 +302,7 @@ L'operazione \texttt{count} supporta i seguenti parametri:
 Le operazioni \texttt{mean\_per\_key} e \texttt{sum\_per\_key} richiedono il parametro aggiuntivo \texttt{key\_column} che permette di indicare quale attributo del dataset utilizzare come chiave sulla quale effettuare la media o la somma, ad esempio una operazione di media per chiave con \texttt{column = "Age"} e \texttt{key\_column = "MedicalCondition"} risulta nella media di età rilevata per ogni diagnosi di una certa condizione medica. I parametri di privacy per questo tipo di operazioni sono i seguenti:
 \begin{itemize}
     \item \texttt{max\_categories\_contributed} ha lo stesso significato descritto per l'operazione di \texttt{count};
-    \item \texttt{max\_contributions\_per\_category} indica il numero massimo di contribuzioni da un dato identificatore di privacy a una singola categoria (o chiave) sulla quale viene effettuate la media;
+    \item \texttt{max\_contributions\_per\_category} indica il numero massimo di contribuzioni da un dato identificatore di privacy a una singola categoria (o chiave) sulla quale viene effettuata la media;
     \item \texttt{min\_value, max\_value} definiscono l'intervallo entro il quale un valore utilizzato nella media deve essere compreso, un valore dell'attributo che contribuisce alla media che è inferiore a \texttt{min\_value} viene vincolato al minimo dell'intervallo, viceversa per il limite superiore. 
 \end{itemize}
 
